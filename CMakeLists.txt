@@ -106,20 +106,17 @@ add_executable(${PROJECT_NAME}_mapOptimization
         src/components/MapOptmization.cpp
         src/components/MOInitializer.cpp
         src/components/MOVisualize.cpp
-        src/components/MOLoopClosure.cpp
         src/components/MOPublish.cpp
+        src/components/MOLocalization.cpp
         ${COMMON_SRC}
-        ${PCL_SRC}
-        ${GTSAM_SRC})
+        ${PCL_SRC})
 ament_target_dependencies(${PROJECT_NAME}_mapOptimization
         ${COMMON_DEP2}
         PCL
         visualization_msgs
         tf2
-        OpenCV
-        GTSAM)
+        OpenCV)
 target_link_libraries(${PROJECT_NAME}_mapOptimization
-        gtsam
         "${cpp_typesupport_target}"
         ${USE_OPENMP})
 

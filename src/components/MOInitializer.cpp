@@ -3,10 +3,10 @@
 
 MapOptimization::MapOptimization(const rclcpp::NodeOptions & options) : ParamServer("lio_sam_MapOptimization", options)
 {
-    ISAM2Params parameters;
-    parameters.relinearizeThreshold = 0.1;
-    parameters.relinearizeSkip = 1;
-    isam = new ISAM2(parameters);
+//    ISAM2Params parameters;
+//    parameters.relinearizeThreshold = 0.1;
+//    parameters.relinearizeSkip = 1;
+//    isam = new ISAM2(parameters);
 
     pubKeyPoses = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/trajectory", 1);
     pubLaserCloudSurround = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/map_global", 1);
@@ -22,9 +22,6 @@ MapOptimization::MapOptimization(const rclcpp::NodeOptions & options) : ParamSer
     subGPS = create_subscription<nav_msgs::msg::Odometry>(
             gpsTopic, 200,
             std::bind(&MapOptimization::gpsHandler, this, std::placeholders::_1));
-    subLoop = create_subscription<std_msgs::msg::Float64MultiArray>(
-            "lio_loop/loop_closure_detection", qos,
-            std::bind(&MapOptimization::loopInfoHandler, this, std::placeholders::_1));
 
     auto saveMapService = [this](const std::shared_ptr<rmw_request_id_t> request_header, const std::shared_ptr<lio_sam_loc::srv::SaveMap::Request> req, std::shared_ptr<lio_sam_loc::srv::SaveMap::Response> res) -> void {
         (void)request_header;
@@ -45,7 +42,18 @@ MapOptimization::MapOptimization(const rclcpp::NodeOptions & options) : ParamSer
     downSizeFilterICP.setLeafSize(mappingSurfLeafSize, mappingSurfLeafSize, mappingSurfLeafSize);
     downSizeFilterSurroundingKeyPoses.setLeafSize(surroundingKeyframeDensity, surroundingKeyframeDensity, surroundingKeyframeDensity); // for surrounding key poses of scan-to-map optimization
 
+    // localization ------------------------------------------------
+    sub_initial_pose = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+            "/initialpose", qos,
+            std::bind(&MapOptimization::initialposeHandler, this, std::placeholders::_1));
+    pubGlobalMap = create_publisher<sensor_msgs::msg::PointCloud2>("/lio_sam/mapping/cloud_registered", 1);
+    // ------------------------------------------------------------
+
     allocateMemory();
+
+    // localization ------------------------------------------------
+    loadGlobalMap();
+    // -------------------------------------------------------------
 }
 
 void MapOptimization::allocateMemory()

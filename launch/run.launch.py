@@ -39,29 +39,29 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='lio_sam',
-            executable='lio_sam_imuPreintegration',
+            package='lio_sam_loc',
+            executable='lio_sam_loc_imuPreintegration',
             name='lio_sam_imuPreintegration',
             parameters=[parameter_file],
             output='screen'
         ),
         Node(
-            package='lio_sam',
-            executable='lio_sam_imageProjection',
+            package='lio_sam_loc',
+            executable='lio_sam_loc_imageProjection',
             name='lio_sam_imageProjection',
             parameters=[parameter_file],
             output='screen'
         ),
         Node(
-            package='lio_sam',
-            executable='lio_sam_featureExtraction',
+            package='lio_sam_loc',
+            executable='lio_sam_loc_featureExtraction',
             name='lio_sam_featureExtraction',
             parameters=[parameter_file],
             output='screen'
         ),
         Node(
-            package='lio_sam',
-            executable='lio_sam_mapOptimization',
+            package='lio_sam_loc',
+            executable='lio_sam_loc_mapOptimization',
             name='lio_sam_mapOptimization',
             parameters=[parameter_file],
             output='screen'

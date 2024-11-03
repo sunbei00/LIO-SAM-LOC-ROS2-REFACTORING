@@ -3,7 +3,7 @@
 
 void MapOptimization::visualizeGlobalMapThread()
 {
-    rclcpp::Rate rate(0.2);
+    rclcpp::Rate rate(3.0);
     while (rclcpp::ok()){
         rate.sleep();
         publishGlobalMap();

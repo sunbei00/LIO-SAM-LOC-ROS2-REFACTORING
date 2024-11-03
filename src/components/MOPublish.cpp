@@ -138,6 +138,7 @@ void MapOptimization::updatePath(const PointTypePose& pose_in)
 
 
 bool MapOptimization::saveMap(std::string destination, float resolution){
+    struct stat info;
 
     string saveMapDirectory;
     cout << "****************************************************" << endl;
@@ -145,12 +146,37 @@ bool MapOptimization::saveMap(std::string destination, float resolution){
     if(destination.empty()) saveMapDirectory = std::getenv("HOME") + savePCDDirectory;
     else saveMapDirectory = std::getenv("HOME") + destination;
     cout << "Save destination: " << saveMapDirectory << endl;
+
     // create directory and remove old files;
-    int unused = system((std::string("exec rm -r ") + saveMapDirectory).c_str());
-    unused = system((std::string("mkdir -p ") + saveMapDirectory).c_str());
+    if (stat(saveMapDirectory.c_str(), &info) == 0)
+        system((std::string("exec rm -r ") + saveMapDirectory).c_str());
+    system((std::string("mkdir -p ") + saveMapDirectory).c_str());
+
     // save key frame transformations
     pcl::io::savePCDFileBinary(saveMapDirectory + "/trajectory.pcd", *cloudKeyPoses3D);
     pcl::io::savePCDFileBinary(saveMapDirectory + "/transformations.pcd", *cloudKeyPoses6D);
+    // save key frame's point cloud
+
+    string kfpcName = "keyframePointCloud/";
+    if(saveMapDirectory.back() != '/')
+        kfpcName = "/keyframePointCloud/";
+    string keyframePointCloudDir = saveMapDirectory + kfpcName;
+    if (stat(keyframePointCloudDir.c_str(), &info) == 0)
+        system((std::string("exec rm -r ") + keyframePointCloudDir).c_str());
+    system((std::string("mkdir -p ") + keyframePointCloudDir).c_str());
+
+    for (size_t i = 0; i < cornerCloudKeyFrames.size(); ++i) {
+        std::stringstream ss;
+        ss << keyframePointCloudDir << "corner_" << i << ".pcd";
+        pcl::io::savePCDFile(ss.str(), *cornerCloudKeyFrames[i]);
+    }
+
+    for (size_t i = 0; i < surfCloudKeyFrames.size(); ++i) {
+        std::stringstream ss;
+        ss << keyframePointCloudDir << "surf_"<< i << ".pcd";
+        pcl::io::savePCDFile(ss.str(), *surfCloudKeyFrames[i]);
+    }
+
     // extract global point cloud map
     pcl::PointCloud<PointType>::Ptr globalCornerCloud(new pcl::PointCloud<PointType>());
     pcl::PointCloud<PointType>::Ptr globalCornerCloudDS(new pcl::PointCloud<PointType>());

@@ -13,26 +13,9 @@
 #include "utils/pclUtils.h"
 #include "utils/utils.h"
 #include "utils/pclType.h"
-#include "utils/gtsamUtils.h"
 
 #include "lio_sam_loc/msg/cloud_info.hpp"
 #include "lio_sam_loc/srv/save_map.hpp"
-
-#include <gtsam/geometry/Rot3.h>
-#include <gtsam/geometry/Pose3.h>
-#include <gtsam/slam/PriorFactor.h>
-#include <gtsam/slam/BetweenFactor.h>
-#include <gtsam/navigation/GPSFactor.h>
-#include <gtsam/navigation/ImuFactor.h>
-#include <gtsam/navigation/CombinedImuFactor.h>
-#include <gtsam/nonlinear/NonlinearFactorGraph.h>
-#include <gtsam/nonlinear/LevenbergMarquardtOptimizer.h>
-#include <gtsam/nonlinear/Marginals.h>
-#include <gtsam/nonlinear/Values.h>
-#include <gtsam/inference/Symbol.h>
-
-#include <gtsam/nonlinear/ISAM2.h>
-
 
 #define PCL_NO_PRECOMPILE
 #include <pcl/point_cloud.h>
@@ -58,22 +41,11 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <nav_msgs/msg/path.hpp>
 
-using namespace gtsam;
-
-using symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
-using symbol_shorthand::V; // Vel   (xdot,ydot,zdot)
-using symbol_shorthand::B; // Bias  (ax,ay,az,gx,gy,gz)
-using symbol_shorthand::G; // GPS pose
+#include <deque>
 
 
 class MapOptimization : public ParamServer {
 public:
-    // gtsam
-    NonlinearFactorGraph gtSAMgraph;
-    Values initialEstimate;
-    ISAM2 *isam;
-    Values isamCurrentEstimate;
-    Eigen::MatrixXd poseCovariance;
 
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudSurround;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubLaserOdometryGlobal;
@@ -146,17 +118,11 @@ public:
     float transformTobeMapped[6];
 
     std::mutex mtx;
-    std::mutex mtxLoopInfo;
+//    std::mutex mtxLoopInfo;
 
     bool isDegenerate = false;
     Eigen::Matrix<float, 6, 6> matP;
 
-    bool aLoopIsClosed = false;
-    map<int, int> loopIndexContainer; // from new to old
-    vector<pair<int, int>> loopIndexQueue;
-    vector<gtsam::Pose3> loopPoseQueue;
-    vector<gtsam::noiseModel::Diagonal::shared_ptr> loopNoiseQueue;
-    deque<std_msgs::msg::Float64MultiArray> loopInfoVec;
 
     nav_msgs::msg::Path globalPath;
 
@@ -164,6 +130,15 @@ public:
     Eigen::Affine3f incrementalOdometryAffineBack;
 
     std::unique_ptr<tf2_ros::TransformBroadcaster> br;
+
+
+    // localization
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubGlobalMap;
+    rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initial_pose;
+    bool has_global_map = false;
+    bool has_initialize_pose = false;
+    bool system_initialized = false;
+    float initialize_pose[6];
 
 
     // MOInitializer.cpp
@@ -175,7 +150,6 @@ public:
     void laserCloudInfoHandler(const lio_sam_loc::msg::CloudInfo::SharedPtr msgIn);
     void gpsHandler(const nav_msgs::msg::Odometry::SharedPtr gpsMsg);
     void updateInitialGuess();
-    void extractForLoopClosure();
     void extractNearby();
     void extractCloud(pcl::PointCloud<PointType>::Ptr cloudToExtract);
     void extractSurroundingKeyFrames();
@@ -186,12 +160,6 @@ public:
     bool LMOptimization(int iterCount);
     void scan2MapOptimization();
     void transformUpdate();
-    bool saveFrame();
-    void addOdomFactor();
-    void addGPSFactor();
-    void addLoopFactor();
-    void saveKeyFramesAndFactor();
-    void correctPoses();
     void updatePath(const PointTypePose& pose_in);
 
     // MOPublish.cpp
@@ -199,19 +167,14 @@ public:
     void publishFrames();
     bool saveMap(std::string destination = "", float resolution = 0.0f);
 
-
-    // MOLoopClosure.cpp
-    void loopClosureThread();
-    void visualizeLoopClosure();
-    void performLoopClosure();
-    bool detectLoopClosureDistance(int *latestID, int *closestID);
-    bool detectLoopClosureExternal(int *latestID, int *closestID);
-    void loopInfoHandler(const std_msgs::msg::Float64MultiArray::SharedPtr loopMsg);
-    void loopFindNearKeyframes(pcl::PointCloud<PointType>::Ptr& nearKeyframes, const int& key, const int& searchNum);
-
     // MOVisualize.cpp
     void visualizeGlobalMapThread();
     void publishGlobalMap();
+
+    // MOLocalization.cpp
+    void loadGlobalMap();
+    void initialposeHandler(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msgIn);
+    bool systemInitialize();
 };
 
 
