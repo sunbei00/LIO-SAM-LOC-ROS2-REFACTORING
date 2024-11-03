@@ -54,7 +54,6 @@ include_directories(
 
 set(COMMON_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/utils/QoS.cpp")
 set(PCL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/utils/pclUtils.cpp")
-set(GTSAM_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/utils/gtsamUtils.cpp")
 
 set(COMMON_DEP1 rclcpp rclpy  tf2_eigen tf2_geometry_msgs pcl_conversions)
 set(COMMON_DEP2 ${COMMON_DEP1} nav_msgs sensor_msgs std_msgs)

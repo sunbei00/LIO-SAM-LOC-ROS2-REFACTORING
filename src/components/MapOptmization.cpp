@@ -55,7 +55,7 @@ void MapOptimization::laserCloudInfoHandler(const lio_sam_loc::msg::CloudInfo::S
 
         updateInitialGuess();
 
-        //extractSurroundingKeyFrames();
+        extractSurroundingKeyFrames();
 
         downsampleCurrentScan();
 
@@ -124,9 +124,12 @@ void MapOptimization::extractNearby()
     std::vector<int> pointSearchInd;
     std::vector<float> pointSearchSqDis;
 
+    PointType currentPose;
+    currentPose = {transformTobeMapped[3], transformTobeMapped[4], transformTobeMapped[5], -1};
+
     // extract all the nearby key poses and downsample them
     kdtreeSurroundingKeyPoses->setInputCloud(cloudKeyPoses3D); // create kd-tree
-    kdtreeSurroundingKeyPoses->radiusSearch(cloudKeyPoses3D->back(), (double)surroundingKeyframeSearchRadius, pointSearchInd, pointSearchSqDis);
+    kdtreeSurroundingKeyPoses->radiusSearch(currentPose, (double)surroundingKeyframeSearchRadius, pointSearchInd, pointSearchSqDis);
     for (int i = 0; i < (int)pointSearchInd.size(); ++i)
     {
         int id = pointSearchInd[i];
@@ -141,17 +144,18 @@ void MapOptimization::extractNearby()
         pt.intensity = cloudKeyPoses3D->points[pointSearchInd[0]].intensity;
     }
 
-    // also extract some latest key frames in case the robot rotates in one position
-    int numPoses = cloudKeyPoses3D->size();
-    for (int i = numPoses-1; i >= 0; --i)
+    kdtreeSurroundingKeyPoses->setInputCloud(cloudKeyPoses3D); // create kd-tree
+    kdtreeSurroundingKeyPoses->radiusSearch(currentPose, 5.0, pointSearchInd, pointSearchSqDis);
+    if(pointSearchInd.size() < 10)
+        kdtreeSurroundingKeyPoses->radiusSearch(currentPose, 20.0, pointSearchInd, pointSearchSqDis);
+
+    for (int i = 0; i < (int)pointSearchInd.size(); ++i)
     {
-        if (timeLaserInfoCur - cloudKeyPoses6D->points[i].time < 10.0)
-            surroundingKeyPosesDS->push_back(cloudKeyPoses3D->points[i]);
-        else
-            break;
+        int id = pointSearchInd[i];
+        surroundingKeyPoses->push_back(cloudKeyPoses3D->points[id]);
     }
 
-    // output : key pose in 10 sec + downsampled keypose in surroundingKeyframeSearchRadius
+    // output : keypose in 5m + downsampled keypose in surroundingKeyframeSearchRadius
 
     extractCloud(surroundingKeyPosesDS);
 }
