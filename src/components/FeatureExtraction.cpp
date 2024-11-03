@@ -5,11 +5,11 @@
 
 FeatureExtraction::FeatureExtraction(const rclcpp::NodeOptions & options) : ParamServer("lio_sam_featureExtraction", options)
 {
-    subLaserCloudInfo = create_subscription<lio_sam::msg::CloudInfo>(
+    subLaserCloudInfo = create_subscription<lio_sam_loc::msg::CloudInfo>(
         "lio_sam/deskew/cloud_info", qos,
         std::bind(&FeatureExtraction::laserCloudInfoHandler, this, std::placeholders::_1));
 
-    pubLaserCloudInfo = create_publisher<lio_sam::msg::CloudInfo>(
+    pubLaserCloudInfo = create_publisher<lio_sam_loc::msg::CloudInfo>(
         "lio_sam/feature/cloud_info", qos);
     pubCornerPoints = create_publisher<sensor_msgs::msg::PointCloud2>(
         "lio_sam/feature/cloud_corner", 1);
@@ -34,7 +34,7 @@ void FeatureExtraction::initializationValue()
     cloudLabel = new int[N_SCAN*Horizon_SCAN];
 }
 
-void FeatureExtraction::laserCloudInfoHandler(const lio_sam::msg::CloudInfo::SharedPtr msgIn)
+void FeatureExtraction::laserCloudInfoHandler(const lio_sam_loc::msg::CloudInfo::SharedPtr msgIn)
 {
     cloudInfo = *msgIn; // new cloud info
     cloudHeader = msgIn->header; // new cloud header

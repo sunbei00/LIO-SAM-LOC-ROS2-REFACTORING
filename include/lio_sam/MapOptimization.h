@@ -15,8 +15,8 @@
 #include "utils/pclType.h"
 #include "utils/gtsamUtils.h"
 
-#include "lio_sam/msg/cloud_info.hpp"
-#include "lio_sam/srv/save_map.hpp"
+#include "lio_sam_loc/msg/cloud_info.hpp"
+#include "lio_sam_loc/srv/save_map.hpp"
 
 #include <gtsam/geometry/Rot3.h>
 #include <gtsam/geometry/Pose3.h>
@@ -88,13 +88,13 @@ public:
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubCloudRegisteredRaw;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubLoopConstraintEdge;
 
-    rclcpp::Service<lio_sam::srv::SaveMap>::SharedPtr srvSaveMap;
-    rclcpp::Subscription<lio_sam::msg::CloudInfo>::SharedPtr subCloud;
+    rclcpp::Service<lio_sam_loc::srv::SaveMap>::SharedPtr srvSaveMap;
+    rclcpp::Subscription<lio_sam_loc::msg::CloudInfo>::SharedPtr subCloud;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr subGPS;
     rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr subLoop;
 
     std::deque<nav_msgs::msg::Odometry> gpsQueue;
-    lio_sam::msg::CloudInfo cloudInfo;
+    lio_sam_loc::msg::CloudInfo cloudInfo;
 
                                                                    // data exist in lidar frame, so need to call transformPointCloud()
     vector<pcl::PointCloud<PointType>::Ptr> cornerCloudKeyFrames;  // idx : keyIndex -> data : cornerCloud
@@ -172,7 +172,7 @@ public:
 
     // MapOptimization.cpp
     pcl::PointCloud<PointType>::Ptr transformPointCloud(pcl::PointCloud<PointType>::Ptr cloudIn, PointTypePose* transformIn);
-    void laserCloudInfoHandler(const lio_sam::msg::CloudInfo::SharedPtr msgIn);
+    void laserCloudInfoHandler(const lio_sam_loc::msg::CloudInfo::SharedPtr msgIn);
     void gpsHandler(const nav_msgs::msg::Odometry::SharedPtr gpsMsg);
     void updateInitialGuess();
     void extractForLoopClosure();

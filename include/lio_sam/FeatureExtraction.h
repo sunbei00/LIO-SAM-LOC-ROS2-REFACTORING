@@ -5,7 +5,7 @@
 #ifndef BUILD_FEATUREEXTRACTION_H
 #define BUILD_FEATUREEXTRACTION_H
 
-#include "lio_sam/msg/cloud_info.hpp"
+#include "lio_sam_loc/msg/cloud_info.hpp"
 
 #include "utils/ParamServer.h"
 #include "utils/pclType.h"
@@ -26,9 +26,9 @@ struct by_value{
 
 class FeatureExtraction : public ParamServer{
 public:
-    rclcpp::Subscription<lio_sam::msg::CloudInfo>::SharedPtr subLaserCloudInfo;
+    rclcpp::Subscription<lio_sam_loc::msg::CloudInfo>::SharedPtr subLaserCloudInfo;
 
-    rclcpp::Publisher<lio_sam::msg::CloudInfo>::SharedPtr pubLaserCloudInfo;
+    rclcpp::Publisher<lio_sam_loc::msg::CloudInfo>::SharedPtr pubLaserCloudInfo;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubCornerPoints;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubSurfacePoints;
 
@@ -38,7 +38,7 @@ public:
 
     pcl::VoxelGrid<PointType> downSizeFilter;
 
-    lio_sam::msg::CloudInfo cloudInfo;
+    lio_sam_loc::msg::CloudInfo cloudInfo;
     std_msgs::msg::Header cloudHeader;
 
     std::vector<smoothness_t> cloudSmoothness;
@@ -48,7 +48,7 @@ public:
 
     explicit FeatureExtraction(const rclcpp::NodeOptions & options);
     void initializationValue();
-    void laserCloudInfoHandler(lio_sam::msg::CloudInfo::SharedPtr msgIn);
+    void laserCloudInfoHandler(lio_sam_loc::msg::CloudInfo::SharedPtr msgIn);
     void calculateSmoothness();
     void markOccludedPoints();
     void extractFeatures();

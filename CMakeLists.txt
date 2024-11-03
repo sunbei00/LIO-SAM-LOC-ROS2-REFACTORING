@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(lio_sam)
+project(lio_sam_loc)
 
 # Set policies
 if (POLICY CMP0074)

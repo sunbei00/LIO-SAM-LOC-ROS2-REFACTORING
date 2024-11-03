@@ -29,7 +29,7 @@ void MapOptimization::gpsHandler(const nav_msgs::msg::Odometry::SharedPtr gpsMsg
     gpsQueue.push_back(*gpsMsg);
 }
 
-void MapOptimization::laserCloudInfoHandler(const lio_sam::msg::CloudInfo::SharedPtr msgIn)
+void MapOptimization::laserCloudInfoHandler(const lio_sam_loc::msg::CloudInfo::SharedPtr msgIn)
 {
     // extract time stamp
     timeLaserInfoStamp = msgIn->header.stamp;

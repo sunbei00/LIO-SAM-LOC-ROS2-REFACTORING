@@ -7,7 +7,7 @@
 
 #include "utils/ParamServer.h"
 #include "utils/pclType.h"
-#include "lio_sam/msg/cloud_info.hpp"
+#include "lio_sam_loc/msg/cloud_info.hpp"
 
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -27,7 +27,7 @@ private:
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloud;
 
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubExtractedCloud;
-    rclcpp::Publisher<lio_sam::msg::CloudInfo>::SharedPtr pubLaserCloudInfo;
+    rclcpp::Publisher<lio_sam_loc::msg::CloudInfo>::SharedPtr pubLaserCloudInfo;
 
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr subImu;
     rclcpp::CallbackGroup::SharedPtr callbackGroupImu;
@@ -63,7 +63,7 @@ private:
     float odomIncreY;
     float odomIncreZ;
 
-    lio_sam::msg::CloudInfo cloudInfo;                  // topic data will be published
+    lio_sam_loc::msg::CloudInfo cloudInfo;                  // topic data will be published
     double timeScanCur;                                 // starting time in lidar scan
     double timeScanEnd;                                 // end time in lidar scan
     std_msgs::msg::Header cloudHeader;                  // topic header will be published

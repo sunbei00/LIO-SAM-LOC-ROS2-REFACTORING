@@ -41,7 +41,7 @@ ImageProjection::ImageProjection(const rclcpp::NodeOptions & options) :
 
     pubExtractedCloud = create_publisher<sensor_msgs::msg::PointCloud2>(
         "lio_sam/deskew/cloud_deskewed", 1);
-    pubLaserCloudInfo = create_publisher<lio_sam::msg::CloudInfo>(
+    pubLaserCloudInfo = create_publisher<lio_sam_loc::msg::CloudInfo>(
         "lio_sam/deskew/cloud_info", qos);
 
     allocateMemory();
