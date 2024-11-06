@@ -1,10 +1,10 @@
 {
-  "package_name": "lio_sam",
-  "output_dir": "/root/humble_ws/src/LIO-SAM/cmake-build-debug/rosidl_generator_cpp/lio_sam",
+  "package_name": "lio_sam_loc",
+  "output_dir": "/root/humble_ws/src/LIO-SAM-LOC/cmake-build-debug/rosidl_generator_cpp/lio_sam_loc",
   "template_dir": "/opt/ros/humble/share/rosidl_generator_cpp/cmake/../resource",
   "idl_tuples": [
-    "/root/humble_ws/src/LIO-SAM/cmake-build-debug/rosidl_adapter/lio_sam:msg/CloudInfo.idl",
-    "/root/humble_ws/src/LIO-SAM/cmake-build-debug/rosidl_adapter/lio_sam:srv/SaveMap.idl"
+    "/root/humble_ws/src/LIO-SAM-LOC/cmake-build-debug/rosidl_adapter/lio_sam_loc:msg/CloudInfo.idl",
+    "/root/humble_ws/src/LIO-SAM-LOC/cmake-build-debug/rosidl_adapter/lio_sam_loc:srv/SaveMap.idl"
   ],
   "ros_interface_dependencies": [
     "std_msgs:/opt/ros/humble/share/std_msgs/msg/Bool.idl",
@@ -114,8 +114,8 @@
     "/opt/ros/humble/share/rosidl_generator_cpp/cmake/../resource/srv__builder.hpp.em",
     "/opt/ros/humble/share/rosidl_generator_cpp/cmake/../resource/srv__struct.hpp.em",
     "/opt/ros/humble/share/rosidl_generator_cpp/cmake/../resource/srv__traits.hpp.em",
-    "/root/humble_ws/src/LIO-SAM/cmake-build-debug/rosidl_adapter/lio_sam/msg/CloudInfo.idl",
-    "/root/humble_ws/src/LIO-SAM/cmake-build-debug/rosidl_adapter/lio_sam/srv/SaveMap.idl",
+    "/root/humble_ws/src/LIO-SAM-LOC/cmake-build-debug/rosidl_adapter/lio_sam_loc/msg/CloudInfo.idl",
+    "/root/humble_ws/src/LIO-SAM-LOC/cmake-build-debug/rosidl_adapter/lio_sam_loc/srv/SaveMap.idl",
     "/opt/ros/humble/share/std_msgs/msg/Bool.idl",
     "/opt/ros/humble/share/std_msgs/msg/Byte.idl",
     "/opt/ros/humble/share/std_msgs/msg/ByteMultiArray.idl",

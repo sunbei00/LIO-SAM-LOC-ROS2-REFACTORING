@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(lio_sam_loc)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Set policies
 if (POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)

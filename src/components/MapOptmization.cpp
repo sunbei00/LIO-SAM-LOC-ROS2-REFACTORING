@@ -55,7 +55,10 @@ void MapOptimization::laserCloudInfoHandler(const lio_sam_loc::msg::CloudInfo::S
 
         updateInitialGuess();
 
-        extractSurroundingKeyFrames();
+        // localization -------------------------------------------
+        if(useKeyFrame)
+            extractSurroundingKeyFrames();
+        // localization -------------------------------------------
 
         downsampleCurrentScan();
 
@@ -144,16 +147,28 @@ void MapOptimization::extractNearby()
         pt.intensity = cloudKeyPoses3D->points[pointSearchInd[0]].intensity;
     }
 
+    // localization -----------------------------------------------------------------------------------------------
     kdtreeSurroundingKeyPoses->setInputCloud(cloudKeyPoses3D); // create kd-tree
-    kdtreeSurroundingKeyPoses->radiusSearch(currentPose, 5.0, pointSearchInd, pointSearchSqDis);
-    if(pointSearchInd.size() < 10)
-        kdtreeSurroundingKeyPoses->radiusSearch(currentPose, 20.0, pointSearchInd, pointSearchSqDis);
+    int search_range_iter = 1;
+    constexpr float search_range = 5.0;
+    do{
+        if(search_range_iter > 10){
+            RCLCPP_ERROR(rclcpp::get_logger("localization"), "can't search keyframe in 50m");
+            return;
+        }
+        kdtreeSurroundingKeyPoses->radiusSearch(currentPose, search_range * search_range_iter, pointSearchInd, pointSearchSqDis);
+        search_range_iter++;
+    }while(pointSearchInd.size() < 10);
+
 
     for (int i = 0; i < (int)pointSearchInd.size(); ++i)
     {
         int id = pointSearchInd[i];
-        surroundingKeyPoses->push_back(cloudKeyPoses3D->points[id]);
+        surroundingKeyPosesDS->push_back(cloudKeyPoses3D->points[id]);
+        if(i > 15)
+            break;
     }
+    // -------------------------------------------------------------------------------------------------------------
 
     // output : keypose in 5m + downsampled keypose in surroundingKeyframeSearchRadius
 
@@ -167,9 +182,6 @@ void MapOptimization::extractCloud(pcl::PointCloud<PointType>::Ptr cloudToExtrac
     laserCloudSurfFromMap->clear();
     for (int i = 0; i < (int)cloudToExtract->size(); ++i)
     {
-        if (pointDistance(cloudToExtract->points[i], cloudKeyPoses3D->back()) > surroundingKeyframeSearchRadius)
-            continue;
-
         int thisKeyInd = (int)cloudToExtract->points[i].intensity;
         if (laserCloudMapContainer.find(thisKeyInd) != laserCloudMapContainer.end())
         {
@@ -180,6 +192,7 @@ void MapOptimization::extractCloud(pcl::PointCloud<PointType>::Ptr cloudToExtrac
             // transformed cloud not available
             pcl::PointCloud<PointType> laserCloudCornerTemp = *transformPointCloud(cornerCloudKeyFrames[thisKeyInd],  &cloudKeyPoses6D->points[thisKeyInd]);
             pcl::PointCloud<PointType> laserCloudSurfTemp = *transformPointCloud(surfCloudKeyFrames[thisKeyInd],    &cloudKeyPoses6D->points[thisKeyInd]);
+
             *laserCloudCornerFromMap += laserCloudCornerTemp;
             *laserCloudSurfFromMap   += laserCloudSurfTemp;
             laserCloudMapContainer[thisKeyInd] = make_pair(laserCloudCornerTemp, laserCloudSurfTemp);
@@ -529,8 +542,6 @@ bool MapOptimization::LMOptimization(int iterCount)
 
 void MapOptimization::scan2MapOptimization()
 {
-    if (cloudKeyPoses3D->points.empty())
-        return;
 
     if (laserCloudCornerLastDSNum > edgeFeatureMinValidNum && laserCloudSurfLastDSNum > surfFeatureMinValidNum)
     {

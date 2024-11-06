@@ -1,0 +1,80 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from lio_sam_loc/msg/CloudInfo.msg
+// generated code does not contain a copyright notice
+
+#include "sensor_msgs/msg/PointCloud2.idl"
+#include "std_msgs/msg/Header.idl"
+
+module lio_sam_loc {
+  module msg {
+    @verbatim (language="comment", text=
+      "Cloud Info")
+    struct CloudInfo {
+      std_msgs::msg::Header header;
+
+      @verbatim (language="comment", text=
+        "start point's index in ring")
+      sequence<int32> start_ring_index;
+
+      @verbatim (language="comment", text=
+        "end point's index in ring" "\n"
+        "because of lidar problem")
+      sequence<int32> end_ring_index;
+
+      @verbatim (language="comment", text=
+        "point column index in range image")
+      sequence<int32> point_col_ind;
+
+      @verbatim (language="comment", text=
+        "point range (distance)")
+      sequence<float> point_range;
+
+      @verbatim (language="comment", text=
+        "it means that imu_*_init is available")
+      int64 imu_available;
+
+      @verbatim (language="comment", text=
+        "it means that initial_guess_* is available")
+      int64 odom_available;
+
+      @verbatim (language="comment", text=
+        "Attitude for LOAM initialization" "\n"
+        "it is set by imageProjection.cpp - imuDeskewInfo()" "\n"
+        "imu orientation at starting time in laser scan")
+      float imu_roll_init;
+
+      float imu_pitch_init;
+
+      float imu_yaw_init;
+
+      @verbatim (language="comment", text=
+        "Initial guess from imu pre-integration" "\n"
+        "it is set by imageProjection.cpp - odomDeskewInfo()" "\n"
+        "orientation at starting time in /odometry/incremental")
+      float initial_guess_x;
+
+      float initial_guess_y;
+
+      float initial_guess_z;
+
+      float initial_guess_roll;
+
+      float initial_guess_pitch;
+
+      float initial_guess_yaw;
+
+      @verbatim (language="comment", text=
+        "Point cloud messages" "\n"
+        "original cloud deskewed")
+      sensor_msgs::msg::PointCloud2 cloud_deskewed;
+
+      @verbatim (language="comment", text=
+        "extracted corner feature")
+      sensor_msgs::msg::PointCloud2 cloud_corner;
+
+      @verbatim (language="comment", text=
+        "extracted surface feature")
+      sensor_msgs::msg::PointCloud2 cloud_surface;
+    };
+  };
+};

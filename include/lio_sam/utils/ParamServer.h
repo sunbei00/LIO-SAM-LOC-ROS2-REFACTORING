@@ -99,6 +99,14 @@ public:
     float globalMapVisualizationPoseDensity;
     float globalMapVisualizationLeafSize;
 
+    // localization
+    bool useKeyFrame;
+
+    // SaveMap
+    bool defaultMapInfo;
+    bool keyframeCloud;
+    bool keyframeGPS;
+
     ParamServer(std::string node_name, const rclcpp::NodeOptions & options) : Node(node_name, options)
     {
         declare_parameter("pointCloudTopic", "points");
@@ -254,6 +262,16 @@ public:
         get_parameter("globalMapVisualizationPoseDensity", globalMapVisualizationPoseDensity);
         declare_parameter("globalMapVisualizationLeafSize", 1.0);
         get_parameter("globalMapVisualizationLeafSize", globalMapVisualizationLeafSize);
+
+        declare_parameter("defaultMapInfo", true);
+        get_parameter("defaultMapInfo", defaultMapInfo);
+        declare_parameter("keyframeCloud", true);
+        get_parameter("keyframeCloud", keyframeCloud);
+        declare_parameter("keyframeGPS", true);
+        get_parameter("keyframeGPS", keyframeGPS);
+
+        declare_parameter("useKeyFrame", true);
+        get_parameter("useKeyFrame", useKeyFrame);
 
         usleep(100);
     }

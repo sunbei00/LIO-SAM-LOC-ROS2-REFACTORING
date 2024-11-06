@@ -4,45 +4,47 @@
 void MapOptimization::loadGlobalMap()
 {
     std::string saveMapDirectory = std::getenv("HOME") + savePCDDirectory;
-    string kfpcName = "keyframePointCloud/";
-    if(saveMapDirectory.back() != '/')
-        kfpcName = "/keyframePointCloud/";
-    string keyframePointCloudDir = saveMapDirectory + kfpcName;
 
+    if(useKeyFrame){
+        string kfpcName = "keyframePointCloud/";
+        if(saveMapDirectory.back() != '/')
+            kfpcName = "/keyframePointCloud/";
+        string keyframePointCloudDir = saveMapDirectory + kfpcName;
 
-    for (size_t i = 0; ; ++i) {
-        std::stringstream cornerSS;
-        cornerSS << keyframePointCloudDir << "corner_" << i << ".pcd";
-        pcl::PointCloud<PointType>::Ptr cornerCloud(new pcl::PointCloud<PointType>());
-        if (pcl::io::loadPCDFile<PointType>(cornerSS.str(), *cornerCloud) == -1) {
-            break;
+        for (size_t i = 0; ; ++i) {
+            std::stringstream cornerSS;
+            cornerSS << keyframePointCloudDir << "corner_" << i << ".pcd";
+            pcl::PointCloud<PointType>::Ptr cornerCloud(new pcl::PointCloud<PointType>());
+            if (pcl::io::loadPCDFile<PointType>(cornerSS.str(), *cornerCloud) == -1) {
+                break;
+            }
+            cornerCloudKeyFrames.push_back(cornerCloud);
         }
-        cornerCloudKeyFrames.push_back(cornerCloud);
-    }
 
-    for (size_t i = 0; ; ++i) {
-        std::stringstream surfSS;
-        surfSS << keyframePointCloudDir << "surf_" << i << ".pcd";
-        pcl::PointCloud<PointType>::Ptr surfCloud(new pcl::PointCloud<PointType>());
-        if (pcl::io::loadPCDFile<PointType>(surfSS.str(), *surfCloud) == -1) {
-            break;
+        for (size_t i = 0; ; ++i) {
+            std::stringstream surfSS;
+            surfSS << keyframePointCloudDir << "surf_" << i << ".pcd";
+            pcl::PointCloud<PointType>::Ptr surfCloud(new pcl::PointCloud<PointType>());
+            if (pcl::io::loadPCDFile<PointType>(surfSS.str(), *surfCloud) == -1) {
+                break;
+            }
+            surfCloudKeyFrames.push_back(surfCloud);
         }
-        surfCloudKeyFrames.push_back(surfCloud);
-    }
 
-    std::string trajectoryFile = saveMapDirectory + "/trajectory.pcd";
-    if (pcl::io::loadPCDFile<PointType>(trajectoryFile, *cloudKeyPoses3D) == -1) {
-        PCL_ERROR("Couldn't read file trajectory.pcd \n");
-        return;
-    }
-    std::cout << "Loaded " << trajectoryFile << " with " << cloudKeyPoses3D->points.size() << " points." << std::endl;
+        std::string trajectoryFile = saveMapDirectory + "/trajectory.pcd";
+        if (pcl::io::loadPCDFile<PointType>(trajectoryFile, *cloudKeyPoses3D) == -1) {
+            PCL_ERROR("Couldn't read file trajectory.pcd \n");
+            return;
+        }
+        std::cout << "Loaded " << trajectoryFile << " with " << cloudKeyPoses3D->points.size() << " points." << std::endl;
 
-    std::string transformationsFile = saveMapDirectory + "/transformations.pcd";
-    if (pcl::io::loadPCDFile<PointTypePose>(transformationsFile, *cloudKeyPoses6D) == -1) {
-        PCL_ERROR("Couldn't read file transformations.pcd \n");
-        return;
+        std::string transformationsFile = saveMapDirectory + "/transformations.pcd";
+        if (pcl::io::loadPCDFile<PointTypePose>(transformationsFile, *cloudKeyPoses6D) == -1) {
+            PCL_ERROR("Couldn't read file transformations.pcd \n");
+            return;
+        }
+        std::cout << "Loaded " << transformationsFile << " with " << cloudKeyPoses6D->points.size() << " points." << std::endl;
     }
-    std::cout << "Loaded " << transformationsFile << " with " << cloudKeyPoses6D->points.size() << " points." << std::endl;
 
     std::cout << "Map directory : " << saveMapDirectory << std::endl;
     pcl::io::loadPCDFile<PointType>(saveMapDirectory + "CornerMap.pcd", *laserCloudCornerFromMap);
@@ -106,11 +108,44 @@ bool MapOptimization::systemInitialize()
     }
 
     static pcl::IterativeClosestPoint<PointType, PointType> icp;
-    icp.setMaxCorrespondenceDistance(3.0); // if gps localization,  set 30
+    icp.setMaxCorrespondenceDistance(3.0);
     icp.setMaximumIterations(100);
     icp.setTransformationEpsilon(1e-4);
     icp.setEuclideanFitnessEpsilon(1e-4);
     icp.setRANSACIterations(0);
+
+
+
+    if(useKeyFrame) {
+        PointType currentPose;
+        static float keyFrameID = 0;
+        keyFrameID--; // minus keyFrameID uses for avoid cache (laserCloudMapContainer)
+        currentPose = {initialize_pose[3], initialize_pose[4], initialize_pose[5], keyFrameID};
+
+        pcl::PointCloud<PointType>::Ptr surroundingKeyPoses(new pcl::PointCloud<PointType>());
+        std::vector<int> pointSearchInd;
+        std::vector<float> pointSearchSqDis;
+        kdtreeSurroundingKeyPoses->setInputCloud(cloudKeyPoses3D); // create kd-tree
+        constexpr float search_range = 5.0;
+        int search_range_iter = 1;
+        do{
+            if(search_range_iter > 10)
+                RCLCPP_ERROR(rclcpp::get_logger("localization"), "can't search keyframe in 50m");
+
+            kdtreeSurroundingKeyPoses->radiusSearch(currentPose, search_range * search_range_iter, pointSearchInd, pointSearchSqDis);
+            search_range_iter++;
+        }while(pointSearchInd.size() < 10);
+
+        std::cout << "searched key-poses size : " << pointSearchInd.size() << std::endl;
+        for (int i = 0; i < (int) pointSearchInd.size(); ++i) {
+            int id = pointSearchInd[i];
+            surroundingKeyPoses->push_back(cloudKeyPoses3D->points[id]);
+
+            if(i > 15)
+                break;
+        }
+        extractCloud(surroundingKeyPoses);
+    }
 
     Eigen::Affine3f initialize_affine = trans2Affine3f(initialize_pose);
 
@@ -120,9 +155,6 @@ bool MapOptimization::systemInitialize()
     pcl::transformPointCloud(*combinedCloudLast, *transformedCombinedCloudLast, initialize_affine);
     icp.setInputSource(transformedCombinedCloudLast);
 
-
-
-
     pcl::PointCloud<PointType>::Ptr combinedCloudMap(new pcl::PointCloud<PointType>());
     *combinedCloudMap = *laserCloudSurfFromMap + *laserCloudCornerFromMap;
     icp.setInputTarget(combinedCloudMap);
@@ -131,9 +163,9 @@ bool MapOptimization::systemInitialize()
     icp.align(*result);
 
     Eigen::Affine3f correctionLidarFrame;
-    float x, y, z, roll, pitch, yaw;
     correctionLidarFrame = icp.getFinalTransformation();
     Eigen::Affine3f tCorrect = correctionLidarFrame * initialize_affine;
+    float x, y, z, roll, pitch, yaw;
     pcl::getTranslationAndEulerAngles (tCorrect, x, y, z, roll, pitch, yaw);
 
     transformTobeMapped[0] = roll;
@@ -143,17 +175,16 @@ bool MapOptimization::systemInitialize()
     transformTobeMapped[4] = y;
     transformTobeMapped[5] = z;
 
-    publishCloud(pubRecentKeyFrame, result, timeLaserInfoStamp, mapFrame); // for debugging
-    if (icp.hasConverged() && icp.getFitnessScore() < 0.3) //< 0.3)
+    if (icp.hasConverged() && icp.getFitnessScore() < 0.3)
     {
-        RCLCPP_INFO(rclcpp::get_logger("globalLocalize"), "initialize pose successful");
+        RCLCPP_INFO(rclcpp::get_logger("localization"), "initialize pose successful");
         system_initialized = true;
 
         return true;
     }
     else
     {
-        RCLCPP_ERROR(rclcpp::get_logger("globalLocalize"), "initialize pose failed");
+        RCLCPP_ERROR(rclcpp::get_logger("localization"), "initialize pose failed");
         has_initialize_pose = false;
         system_initialized = false;
         return false;

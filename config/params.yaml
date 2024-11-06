@@ -3,7 +3,7 @@
 
     # Topics
     pointCloudTopic: "/velodyne_points"          # Point cloud data
-    imuTopic: "/imu"                             # IMU data
+    imuTopic: "/imu/data"                             # IMU data
     odomTopic: "odometry/imu"                    # IMU pre-preintegration odometry, same frequency as IMU
     gpsTopic: "odometry/gpsz"                    # GPS odometry topic from navsat, see module_navsat.launch file
 
@@ -23,6 +23,14 @@
     savePCD: false                               # https://github.com/TixiaoShan/LIO-SAM/issues/3
     savePCDDirectory: "/map/"                    # in your home folder, starts and ends with "/". Warning: the code deletes "LOAM" folder then recreates it. See "mapOptimization" for implementation
 
+    # SaveMap
+    defaultMapInfo: True
+    keyframeCloud: True
+    keyframeGPS: True
+
+    # Localization setting
+    useKeyFrame: true
+
     # Sensor Settings
     sensor: velodyne                            # lidar sensor type, 'velodyne' or 'ouster' or 'livox'
     N_SCAN: 16                                  # number of lidar channel (i.e., Velodyne/Ouster: 16, 32, 64, 128, Livox Horizon: 6)
@@ -32,12 +40,12 @@
     lidarMaxRange: 200.0                        # default: 1000.0, maximum lidar range to be used
 
     # IMU Settings
-    imuAccNoise: 0.0006462062676789466
-    imuGyrNoise: 0.00014097573373428828
-    imuAccBiasN: 3.1762021835291345e-05
-    imuGyrBiasN: 5.810887617788407e-06
+    imuAccNoise: 0.06462062676789466
+    imuGyrNoise: 0.014097573373428828
+    imuAccBiasN: 3.1762021835291345e-04
+    imuGyrBiasN: 5.810887617788407e-05
 
-    imuGravity: 0.0 #-9.81 #0.0
+    imuGravity: -9.81 #0.0
     imuRPYWeight: 0.1
 
     extrinsicTrans: [0.0, 0.0, 0.0]
@@ -64,8 +72,8 @@
     rotation_tollerance: 1000.0                   # radians
 
     # CPU Params
-    numberOfCores: 6                              # number of cores for mapping optimization
-    mappingProcessInterval: 0.15                  # seconds, regulate mapping frequency
+    numberOfCores: 4                              # number of cores for mapping optimization
+    mappingProcessInterval: 0.0                  # seconds, regulate mapping frequency
 
     # Surrounding map
     surroundingkeyframeAddingDistThreshold: 1.0   # meters, regulate keyframe adding threshold
