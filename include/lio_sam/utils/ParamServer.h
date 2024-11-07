@@ -101,6 +101,9 @@ public:
 
     // localization
     bool useKeyFrame;
+    string localizationMethod;
+    float collectKeyframeRange;
+    float localizationFitnessScore;
 
     // SaveMap
     bool defaultMapInfo;
@@ -272,6 +275,13 @@ public:
 
         declare_parameter("useKeyFrame", true);
         get_parameter("useKeyFrame", useKeyFrame);
+        declare_parameter("localizationMethod", "rviz");
+        get_parameter("localizationMethod", localizationMethod);
+        declare_parameter("collectKeyframeRange", 5.0);
+        get_parameter("collectKeyframeRange", collectKeyframeRange);
+        declare_parameter("localizationFitnessScore", 0.3);
+        get_parameter("localizationFitnessScore", localizationFitnessScore);
+
 
         usleep(100);
     }

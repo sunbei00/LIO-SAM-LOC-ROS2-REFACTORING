@@ -30,6 +30,9 @@
 
     # Localization setting
     useKeyFrame: true
+    localizationMethod: "keyframe"              # rviz, keyframe, gps
+    collectKeyframeRange: 5.0                   # if use keyframe
+    localizationFitnessScore: 0.3               #
 
     # Sensor Settings
     sensor: velodyne                            # lidar sensor type, 'velodyne' or 'ouster' or 'livox'
@@ -73,7 +76,7 @@
 
     # CPU Params
     numberOfCores: 4                              # number of cores for mapping optimization
-    mappingProcessInterval: 0.0                  # seconds, regulate mapping frequency
+    mappingProcessInterval: 0.10                  # seconds, regulate mapping frequency
 
     # Surrounding map
     surroundingkeyframeAddingDistThreshold: 1.0   # meters, regulate keyframe adding threshold

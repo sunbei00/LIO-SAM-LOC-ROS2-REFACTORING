@@ -149,14 +149,13 @@ void MapOptimization::extractNearby()
 
     // localization -----------------------------------------------------------------------------------------------
     kdtreeSurroundingKeyPoses->setInputCloud(cloudKeyPoses3D); // create kd-tree
-    int search_range_iter = 1;
-    constexpr float search_range = 5.0;
+    float search_range_iter = 1;
     do{
         if(search_range_iter > 10){
             RCLCPP_ERROR(rclcpp::get_logger("localization"), "can't search keyframe in 50m");
             return;
         }
-        kdtreeSurroundingKeyPoses->radiusSearch(currentPose, search_range * search_range_iter, pointSearchInd, pointSearchSqDis);
+        kdtreeSurroundingKeyPoses->radiusSearch(currentPose, collectKeyframeRange * search_range_iter, pointSearchInd, pointSearchSqDis);
         search_range_iter++;
     }while(pointSearchInd.size() < 10);
 

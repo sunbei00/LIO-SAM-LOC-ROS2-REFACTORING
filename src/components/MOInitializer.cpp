@@ -98,3 +98,4 @@ void MapOptimization::allocateMemory()
 
     matP.setZero();
 }
+

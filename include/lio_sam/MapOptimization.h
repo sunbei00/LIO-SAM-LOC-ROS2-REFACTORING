@@ -118,7 +118,6 @@ public:
     float transformTobeMapped[6];
 
     std::mutex mtx;
-//    std::mutex mtxLoopInfo;
 
     bool isDegenerate = false;
     Eigen::Matrix<float, 6, 6> matP;
@@ -175,6 +174,8 @@ public:
     void loadGlobalMap();
     void initialposeHandler(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msgIn);
     bool systemInitialize();
+    void keyframeLocalization();
+
 };
 
 
