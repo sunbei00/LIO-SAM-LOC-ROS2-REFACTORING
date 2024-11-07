@@ -1,6 +1,8 @@
 #include "MapOptimization.h"
 #include <pcl/registration/ndt.h>
+#include <pcl/registration/gicp.h>
 #include <vector>
+#include <omp.h>
 
 
 void MapOptimization::loadGlobalMap()
@@ -209,56 +211,109 @@ void MapOptimization::keyframeLocalization(){
     static std::vector<std::pair<float, Eigen::Affine3f>> ndtResult;
 
     std::function<void()> getInitialPose = [&]() {
-        pcl::NormalDistributionsTransform<PointType, PointType> ndt;
-        ndt.setResolution(1.0);  // Set the grid resolution
-        ndt.setMaximumIterations(10);
-        ndt.setTransformationEpsilon(1e-4);
-        ndt.setStepSize(0.1);  // Step size for the optimizer
 
-
+        omp_lock_t laserCloudMapContainerLock;
+        omp_lock_t ndtResultLock;
+        omp_init_lock(&laserCloudMapContainerLock);
+        omp_init_lock(&ndtResultLock);
         constexpr int sampling_rate = 5;
+
+        std::vector<pcl::NormalDistributionsTransform<PointType, PointType>> ndts;
+        std::vector<pcl::KdTreeFLANN<PointType>> kdTreeFlanns;
+        std::vector<std::pair<pcl::PointCloud<PointType>::Ptr, pcl::PointCloud<PointType>::Ptr>> maps;
+        std::vector<pcl::PointCloud<PointType>::Ptr> surroundingKeyPosesVector;
+        for(int i=0; i<numberOfCores; i++){
+            ndts.push_back(pcl::NormalDistributionsTransform<PointType, PointType>());
+            auto& ndt = ndts.back();
+            ndt.setResolution(0.8);
+            ndt.setMaximumIterations(50);
+            ndt.setTransformationEpsilon(1e-4);
+            ndt.setStepSize(0.3);
+
+            kdTreeFlanns.push_back(pcl::KdTreeFLANN<PointType>());
+
+            maps.emplace_back(new pcl::PointCloud<PointType>(), new pcl::PointCloud<PointType>());
+
+            surroundingKeyPosesVector.emplace_back(new pcl::PointCloud<PointType>());
+        }
+
+        std::cout << "calculate initial pose from keyframe ..";
+
+        #pragma omp parallel for num_threads(numberOfCores)
         for(int i=0; i < cloudKeyPoses6D->size(); i+=sampling_rate){
-            auto& currentPose = cloudKeyPoses6D->at(i);
+            int thread_id = omp_get_thread_num();
+            auto& ndt = ndts[thread_id];
+            auto& kdTreeFlann = kdTreeFlanns[thread_id];
+
+            auto& [cornerMap, surfMap] = maps[thread_id];
+            cornerMap->clear();
+            surfMap->clear();
+
+            auto& surroundingKeyPoses = surroundingKeyPosesVector[thread_id];
+            surroundingKeyPoses->clear();
+
+            auto currentPose = cloudKeyPoses6D->at(i);
             auto& currentPosition = cloudKeyPoses3D->at(i);
 
-            pcl::PointCloud<PointType>::Ptr surroundingKeyPoses(new pcl::PointCloud<PointType>());
             std::vector<int> pointSearchInd;
             std::vector<float> pointSearchSqDis;
-            kdtreeSurroundingKeyPoses->setInputCloud(cloudKeyPoses3D); // create kd-tree
-            kdtreeSurroundingKeyPoses->radiusSearch(currentPosition, collectKeyframeRange, pointSearchInd, pointSearchSqDis);
 
-            for (int i = 0; i < (int) pointSearchInd.size(); ++i) {
-                int id = pointSearchInd[i];
-                surroundingKeyPoses->push_back(cloudKeyPoses3D->points[id]);
+            kdTreeFlann.setInputCloud(cloudKeyPoses3D);
+            kdTreeFlann.radiusSearch(currentPosition, collectKeyframeRange, pointSearchInd, pointSearchSqDis);
 
-                if(i > 10)
-                    break;
+            for (int i = 0; i < (int) pointSearchInd.size(); ++i)
+                surroundingKeyPoses->push_back(cloudKeyPoses3D->points[pointSearchInd[i]]);
+
+            for (int i = 0; i < (int)surroundingKeyPoses->size(); ++i)
+            {
+                int thisKeyInd = (int)surroundingKeyPoses->points[i].intensity;
+                if (laserCloudMapContainer.find(thisKeyInd) != laserCloudMapContainer.end())
+                {
+                    *cornerMap += laserCloudMapContainer[thisKeyInd].first;
+                    *surfMap   += laserCloudMapContainer[thisKeyInd].second;
+                } else {
+                    pcl::PointCloud<PointType> laserCloudCornerTemp = *transformPointCloud(cornerCloudKeyFrames[thisKeyInd],  &cloudKeyPoses6D->points[thisKeyInd]);
+                    pcl::PointCloud<PointType> laserCloudSurfTemp = *transformPointCloud(surfCloudKeyFrames[thisKeyInd],    &cloudKeyPoses6D->points[thisKeyInd]);
+
+                    *cornerMap += laserCloudCornerTemp;
+                    *surfMap   += laserCloudSurfTemp;
+
+
+                    omp_set_lock(&laserCloudMapContainerLock);
+                    laserCloudMapContainer[thisKeyInd] = make_pair(laserCloudCornerTemp, laserCloudSurfTemp);
+                    omp_unset_lock(&laserCloudMapContainerLock);
+                }
             }
-            extractCloud(surroundingKeyPoses);
 
+            for(int i=0; i < 4; i++){
+                currentPose.yaw += 1.5708;
+                if(currentPose.yaw > 3.141592)
+                    currentPose.yaw -= 3.141592*2;
+                Eigen::Affine3f initialize_affine = pclPointToAffine3f(currentPose);
+                pcl::PointCloud<PointType>::Ptr combinedCloudLast(new pcl::PointCloud<PointType>());
+                *combinedCloudLast = *laserCloudSurfLast + *laserCloudCornerLast;
+                pcl::PointCloud<PointType>::Ptr transformedCombinedCloudLast(new pcl::PointCloud<PointType>());
+                pcl::transformPointCloud(*combinedCloudLast, *transformedCombinedCloudLast, initialize_affine);
+                ndt.setInputSource(transformedCombinedCloudLast);
 
-            Eigen::Affine3f initialize_affine = pclPointToAffine3f(currentPose);
-            pcl::PointCloud<PointType>::Ptr combinedCloudLast(new pcl::PointCloud<PointType>());
-            *combinedCloudLast = *laserCloudSurfLast + *laserCloudCornerLast;
-            pcl::PointCloud<PointType>::Ptr transformedCombinedCloudLast(new pcl::PointCloud<PointType>());
-            pcl::transformPointCloud(*combinedCloudLast, *transformedCombinedCloudLast, initialize_affine);
-            ndt.setInputSource(transformedCombinedCloudLast);
+                pcl::PointCloud<PointType>::Ptr combinedCloudMap(new pcl::PointCloud<PointType>());
+                *combinedCloudMap = *cornerMap + *surfMap;
+                ndt.setInputTarget(combinedCloudMap);
 
-            pcl::PointCloud<PointType>::Ptr combinedCloudMap(new pcl::PointCloud<PointType>());
-            *combinedCloudMap = *laserCloudSurfFromMap + *laserCloudCornerFromMap;
-            ndt.setInputTarget(combinedCloudMap);
+                pcl::PointCloud<PointType>::Ptr result(new pcl::PointCloud<PointType>());
+                ndt.align(*result);
 
-            pcl::PointCloud<PointType>::Ptr result(new pcl::PointCloud<PointType>());
-            ndt.align(*result);
-
-            if(ndt.getFitnessScore() < localizationFitnessScore * 2){
                 Eigen::Affine3f correctionLidarFrame;
                 correctionLidarFrame = ndt.getFinalTransformation();
                 Eigen::Affine3f tCorrect = correctionLidarFrame * initialize_affine;
 
+                omp_set_lock(&ndtResultLock);
                 ndtResult.emplace_back(ndt.getFitnessScore(), tCorrect);
+                omp_unset_lock(&ndtResultLock);
             }
         }
+        omp_destroy_lock(&laserCloudMapContainerLock);
+        omp_destroy_lock(&ndtResultLock);
 
         std::sort(ndtResult.begin(), ndtResult.end(),
                   [](const std::pair<float, Eigen::Affine3f>& a, const std::pair<float, Eigen::Affine3f>& b) {
@@ -276,7 +331,7 @@ void MapOptimization::keyframeLocalization(){
 
     if(index < ndtResult.size()){
         has_initialize_pose = true;
-        auto [_, transform] = ndtResult[index++];
+        auto [score, transform] = ndtResult[index++];
 
         float x, y, z, roll, pitch, yaw;
         pcl::getTranslationAndEulerAngles(transform, x, y, z, roll, pitch, yaw);
@@ -287,6 +342,7 @@ void MapOptimization::keyframeLocalization(){
         initialize_pose[3] = x;
         initialize_pose[4] = y;
         initialize_pose[5] = z;
+        std::cout << x << ", " << y << ", " << z << ", " << roll << ", " << pitch << ", " << yaw << ", " << score<< std::endl;
     }else{
         has_initialize_pose = false;
         RCLCPP_ERROR(rclcpp::get_logger("localization"), "can't find initial pose using key-frame");

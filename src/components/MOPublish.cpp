@@ -223,6 +223,7 @@ bool MapOptimization::saveMap(std::string destination, float resolution){
     };
 
 
+    std::lock_guard<std::mutex> lock(mtx);
     bool ret = true;
     if(defaultMapInfo)
         ret = ret && saveDefault();

@@ -3,7 +3,7 @@
 
     # Topics
     pointCloudTopic: "/velodyne_points"          # Point cloud data
-    imuTopic: "/imu/data"                             # IMU data
+    imuTopic: "/imu"                             # IMU data
     odomTopic: "odometry/imu"                    # IMU pre-preintegration odometry, same frequency as IMU
     gpsTopic: "odometry/gpsz"                    # GPS odometry topic from navsat, see module_navsat.launch file
 
@@ -31,7 +31,7 @@
     # Localization setting
     useKeyFrame: true
     localizationMethod: "keyframe"              # rviz, keyframe, gps
-    collectKeyframeRange: 5.0                   # if use keyframe
+    collectKeyframeRange: 3.0                   # if use keyframe
     localizationFitnessScore: 0.3               #
 
     # Sensor Settings
@@ -43,12 +43,12 @@
     lidarMaxRange: 200.0                        # default: 1000.0, maximum lidar range to be used
 
     # IMU Settings
-    imuAccNoise: 0.06462062676789466
-    imuGyrNoise: 0.014097573373428828
-    imuAccBiasN: 3.1762021835291345e-04
-    imuGyrBiasN: 5.810887617788407e-05
+    imuAccNoise: 0.049058828
+    imuGyrNoise: 0.174677746
+    imuAccBiasN: 0.011656163
+    imuGyrBiasN: 0.010668651
 
-    imuGravity: -9.81 #0.0
+    imuGravity: 0.0 #-9.81 #0.0
     imuRPYWeight: 0.1
 
     extrinsicTrans: [0.0, 0.0, 0.0]
