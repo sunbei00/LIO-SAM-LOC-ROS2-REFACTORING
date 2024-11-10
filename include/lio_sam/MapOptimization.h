@@ -45,8 +45,7 @@
 
 
 class MapOptimization : public ParamServer {
-public:
-
+public: // ros2
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudSurround;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubLaserOdometryGlobal;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubLaserOdometryIncremental;
@@ -65,28 +64,34 @@ public:
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr subGPS;
     rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr subLoop;
 
-    std::deque<nav_msgs::msg::Odometry> gpsQueue;
+public: // ros2 topic from /lio_sam/featureExtraction node
     lio_sam_loc::msg::CloudInfo cloudInfo;
 
-                                                                   // data exist in lidar frame, so need to call transformPointCloud()
+public: // data
+
+    // mapping keyPose idx to point cloud in lidar frame
     vector<pcl::PointCloud<PointType>::Ptr> cornerCloudKeyFrames;  // idx : keyIndex -> data : cornerCloud
     vector<pcl::PointCloud<PointType>::Ptr> surfCloudKeyFrames;    // idx : keyIndex -> data : surfCloud
+    // data exist in lidar frame, so need to call transformPointCloud()
 
+
+    // keyPose
     pcl::PointCloud<PointType>::Ptr cloudKeyPoses3D;               // 3d keyposes
     pcl::PointCloud<PointTypePose>::Ptr cloudKeyPoses6D;           // 6d keyposes
     pcl::PointCloud<PointType>::Ptr copy_cloudKeyPoses3D;
     pcl::PointCloud<PointTypePose>::Ptr copy_cloudKeyPoses6D;
 
+    // point cloud in current lidar frame
     pcl::PointCloud<PointType>::Ptr laserCloudCornerLast;       // corner feature from FeatureExtraction
     pcl::PointCloud<PointType>::Ptr laserCloudSurfLast;         // surf feature from FeatureExtraction
     pcl::PointCloud<PointType>::Ptr laserCloudCornerLastDS;     // downsampled corner feature set from FeatureExtraction
-    int laserCloudCornerLastDSNum = 0;                          // downsampled corner feature's size
     pcl::PointCloud<PointType>::Ptr laserCloudSurfLastDS;       // downsampled surf feature set from FeatureExtraction
+    int laserCloudCornerLastDSNum = 0;                          // downsampled corner feature's size
     int laserCloudSurfLastDSNum = 0;                            // downsampled surf feature's size
-
+    
+    // data using at scan2MapOptimization function
     pcl::PointCloud<PointType>::Ptr laserCloudOri;
     pcl::PointCloud<PointType>::Ptr coeffSel;
-
     std::vector<PointType> laserCloudOriCornerVec;              // corner point holder for parallel computation
     std::vector<PointType> coeffSelCornerVec;
     std::vector<bool> laserCloudOriCornerFlag;
@@ -94,40 +99,49 @@ public:
     std::vector<PointType> coeffSelSurfVec;
     std::vector<bool> laserCloudOriSurfFlag;
 
+    // (cache) mapping key-pose to point cloud in world coordinate
     map<int, pair<pcl::PointCloud<PointType>, pcl::PointCloud<PointType>>> laserCloudMapContainer;
+    // point cloud sub-map at current pose
     pcl::PointCloud<PointType>::Ptr laserCloudCornerFromMap;    // Map is come from nearby
     pcl::PointCloud<PointType>::Ptr laserCloudSurfFromMap;      // Map is come from nearby
     pcl::PointCloud<PointType>::Ptr laserCloudCornerFromMapDS;  // downsampled Map is come from laserCloudCornerFromMap
     pcl::PointCloud<PointType>::Ptr laserCloudSurfFromMapDS;    // downsampled Map is come from laserCloudSurfFromMap
 
-
+    // kd-tree object which is used for searching point
     pcl::KdTreeFLANN<PointType>::Ptr kdtreeCornerFromMap;       // KdTree from laserCloudCornerFromMapDS
     pcl::KdTreeFLANN<PointType>::Ptr kdtreeSurfFromMap;         // kdTree from laserCloudSurfFromMapDS
 
+    // kd-tree object which is used for searching key-pose.
     pcl::KdTreeFLANN<PointType>::Ptr kdtreeSurroundingKeyPoses;
     pcl::KdTreeFLANN<PointType>::Ptr kdtreeHistoryKeyPoses;
 
+    // filtering object for down-sampling
     pcl::VoxelGrid<PointType> downSizeFilterCorner;
     pcl::VoxelGrid<PointType> downSizeFilterSurf;
     pcl::VoxelGrid<PointType> downSizeFilterICP;
     pcl::VoxelGrid<PointType> downSizeFilterSurroundingKeyPoses; // for surrounding key poses of scan-to-map optimization
 
+    // time stamp of lidar message.
     rclcpp::Time timeLaserInfoStamp;
     double timeLaserInfoCur;
 
+    // current pose
     float transformTobeMapped[6];
 
+    // synchronization at saveMap, publish, main pipeline
     std::mutex mtx;
 
+    // this state means that optimization result is fail.
     bool isDegenerate = false;
-    Eigen::Matrix<float, 6, 6> matP;
 
-
+    // for visualization.
     nav_msgs::msg::Path globalPath;
 
-    Eigen::Affine3f incrementalOdometryAffineFront;
-    Eigen::Affine3f incrementalOdometryAffineBack;
+    // it uses imu optimization between predicted pose from IMU and LiDAR
+    Eigen::Affine3f incrementalOdometryAffineFront; // predicted pose from IMU
+    Eigen::Affine3f incrementalOdometryAffineBack;  // predicted pose from LiDAR
 
+    // broadcast TF for debugging
     std::unique_ptr<tf2_ros::TransformBroadcaster> br;
 
 
@@ -139,6 +153,11 @@ public:
     bool system_initialized = false;
     float initialize_pose[6];
 
+
+    // TO DO: gps
+    std::deque<nav_msgs::msg::Odometry> gpsQueue;
+
+public: // methods
 
     // MOInitializer.cpp
     MapOptimization(const rclcpp::NodeOptions& options);

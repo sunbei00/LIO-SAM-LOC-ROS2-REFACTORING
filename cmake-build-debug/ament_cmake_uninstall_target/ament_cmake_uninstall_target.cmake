@@ -21,7 +21,7 @@ function(ament_cmake_uninstall_target_remove_empty_directories path)
   list(LENGTH files length)
   if(length EQUAL 0)
     message(STATUS "Uninstalling: ${path}/")
-    execute_process(COMMAND "/root/share/sw/clion-2024.2.1/bin/cmake/linux/x64/bin/cmake" "-E" "remove_directory" "${path}")
+    execute_process(COMMAND "/root/share/sw/clion-2024.2.3/bin/cmake/linux/x64/bin/cmake" "-E" "remove_directory" "${path}")
     # recursively try to remove parent directories
     get_filename_component(parent_path "${path}" PATH)
     ament_cmake_uninstall_target_remove_empty_directories("${parent_path}")
