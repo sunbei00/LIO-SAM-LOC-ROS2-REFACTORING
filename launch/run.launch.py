@@ -64,7 +64,7 @@ def generate_launch_description():
             executable='lio_sam_loc_mapOptimization',
             name='lio_sam_mapOptimization',
             parameters=[parameter_file],
-            output='screen'
+            output='screen',
         ),
         Node(
             package='rviz2',

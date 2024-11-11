@@ -17,6 +17,20 @@
 #include "lio_sam_loc/msg/cloud_info.hpp"
 #include "lio_sam_loc/srv/save_map.hpp"
 
+#include <gtsam/geometry/Rot3.h>
+#include <gtsam/geometry/Pose3.h>
+#include <gtsam/slam/PriorFactor.h>
+#include <gtsam/slam/BetweenFactor.h>
+#include <gtsam/navigation/GPSFactor.h>
+#include <gtsam/navigation/ImuFactor.h>
+#include <gtsam/navigation/CombinedImuFactor.h>
+#include <gtsam/nonlinear/NonlinearFactorGraph.h>
+#include <gtsam/nonlinear/LevenbergMarquardtOptimizer.h>
+#include <gtsam/nonlinear/Marginals.h>
+#include <gtsam/nonlinear/Values.h>
+#include <gtsam/inference/Symbol.h>
+#include <gtsam/nonlinear/ISAM2.h>
+
 #define PCL_NO_PRECOMPILE
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -43,8 +57,20 @@
 
 #include <deque>
 
+using namespace gtsam;
+
+using symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
+using symbol_shorthand::V; // Vel   (xdot,ydot,zdot)
+using symbol_shorthand::B; // Bias  (ax,ay,az,gx,gy,gz)
+using symbol_shorthand::G; // GPS pose
 
 class MapOptimization : public ParamServer {
+public: // gtsam
+    NonlinearFactorGraph gtSAMgraph;
+    Values initialEstimate;
+    ISAM2 *isam;
+    Values isamCurrentEstimate;
+    Eigen::MatrixXd poseCovariance;
 public: // ros2
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudSurround;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubLaserOdometryGlobal;
@@ -74,12 +100,9 @@ public: // data
     vector<pcl::PointCloud<PointType>::Ptr> surfCloudKeyFrames;    // idx : keyIndex -> data : surfCloud
     // data exist in lidar frame, so need to call transformPointCloud()
 
-
     // keyPose
     pcl::PointCloud<PointType>::Ptr cloudKeyPoses3D;               // 3d keyposes
     pcl::PointCloud<PointTypePose>::Ptr cloudKeyPoses6D;           // 6d keyposes
-    pcl::PointCloud<PointType>::Ptr copy_cloudKeyPoses3D;
-    pcl::PointCloud<PointTypePose>::Ptr copy_cloudKeyPoses6D;
 
     // point cloud in current lidar frame
     pcl::PointCloud<PointType>::Ptr laserCloudCornerLast;       // corner feature from FeatureExtraction
@@ -125,11 +148,13 @@ public: // data
     rclcpp::Time timeLaserInfoStamp;
     double timeLaserInfoCur;
 
-    // current pose
+    // current pose, roll pitch yaw x y z
     float transformTobeMapped[6];
 
     // synchronization at saveMap, publish, main pipeline
     std::mutex mtx;
+    // synchronization at mtxLoop
+    std::mutex mtxLoopInfo;
 
     // this state means that optimization result is fail.
     bool isDegenerate = false;
@@ -144,6 +169,8 @@ public: // data
     // broadcast TF for debugging
     std::unique_ptr<tf2_ros::TransformBroadcaster> br;
 
+    // GPS factor, global matching factor
+    bool aLoopIsClosed = false;
 
     // localization
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubGlobalMap;
@@ -152,6 +179,24 @@ public: // data
     bool has_initialize_pose = false;
     bool system_initialized = false;
     float initialize_pose[6];
+
+    // pre-built data (kf means key frame)
+    pcl::PointCloud<PointType>::Ptr cornerPrebuiltMap;           // map is come from Prebuilt
+    pcl::PointCloud<PointType>::Ptr surfPrebuiltMap;             // map is come from Prebuilt
+    pcl::PointCloud<PointType>::Ptr combinedPrebuiltMap;         // map is come from Prebuilt
+    pcl::PointCloud<PointType>::Ptr subCornerPrebuiltMap;        // sub map is come from Prebuilt (will be also used by global matching)
+    pcl::PointCloud<PointType>::Ptr subSurfPrebuiltMap;          // sub map is come from Prebuilt (will be also used by global matching)
+    pcl::PointCloud<PointType>::Ptr kfPrebuilt3D;               // 3d keyposes from Prebuilt
+    pcl::PointCloud<PointTypePose>::Ptr kfPrebuilt6D;           // 6d keyposes from Prebuilt
+    vector<pcl::PointCloud<PointType>::Ptr> kf2cornerPrebuilt;  // idx : keyIndex -> data : cornerCloud
+    vector<pcl::PointCloud<PointType>::Ptr> kf2surfPrebuilt;    // idx : keyIndex -> data : surfCloud
+    map<int, pair<pcl::PointCloud<PointType>, pcl::PointCloud<PointType>>> mapContainerPrebuilt;
+
+    // globalMatching
+    // idx, roll, pitch, yaw, x, y, z, rot_variance, pos_variance
+    std::vector<std::tuple<int,float,float,float,float,float,float,float,float>> globalMatchingResult;
+    std::set<int> matchedIndexContainer;
+    std::mutex mtxGlobalMatching;
 
 
     // TO DO: gps
@@ -178,6 +223,12 @@ public: // methods
     bool LMOptimization(int iterCount);
     void scan2MapOptimization();
     void transformUpdate();
+    bool saveFrame();
+    void addOdomFactor();
+    void addGPSFactor();
+    void addGlobalMatchingFactor();
+    void saveKeyFramesAndFactor();
+    void correctPoses();
     void updatePath(const PointTypePose& pose_in);
 
     // MOPublish.cpp
@@ -188,6 +239,10 @@ public: // methods
     // MOVisualize.cpp
     void visualizeGlobalMapThread();
     void publishGlobalMap();
+
+    // MOGlobalMatching.cpp
+    void globalMatchingThread();
+    void globalMatching();
 
     // MOLocalization.cpp
     void loadGlobalMap();

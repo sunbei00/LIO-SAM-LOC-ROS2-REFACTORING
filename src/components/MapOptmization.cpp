@@ -1,4 +1,5 @@
 #include "MapOptimization.h"
+#include "utils/gtsamUtils.h"
 #include <opencv2/opencv.hpp>
 
 
@@ -47,22 +48,24 @@ void MapOptimization::laserCloudInfoHandler(const lio_sam_loc::msg::CloudInfo::S
     {
         timeLastProcessing = timeLaserInfoCur;
 
+        downsampleCurrentScan();
+
         // localization -------------------------------------------
         if (!system_initialized)
             if(!systemInitialize())
                 return;
+
         // --------------------------------------------------------
 
         updateInitialGuess();
 
-        // localization -------------------------------------------
-        if(useKeyFrame)
-            extractSurroundingKeyFrames();
-        // localization -------------------------------------------
-
-        downsampleCurrentScan();
+        extractSurroundingKeyFrames();
 
         scan2MapOptimization();
+
+        saveKeyFramesAndFactor();
+
+        correctPoses();
 
         publishOdometry();
 
@@ -123,55 +126,12 @@ void MapOptimization::updateInitialGuess()
 void MapOptimization::extractNearby()
 {
     pcl::PointCloud<PointType>::Ptr surroundingKeyPoses(new pcl::PointCloud<PointType>());
-    pcl::PointCloud<PointType>::Ptr surroundingKeyPosesDS(new pcl::PointCloud<PointType>());
-    std::vector<int> pointSearchInd;
-    std::vector<float> pointSearchSqDis;
 
-    PointType currentPose;
-    currentPose = {transformTobeMapped[3], transformTobeMapped[4], transformTobeMapped[5], -1};
+    int numPoses = cloudKeyPoses3D->size();
+    for (int i = numPoses - 1; i >= std::max(0, numPoses - numberOfKeyframeForTempolarMap); --i)
+        surroundingKeyPoses->push_back(cloudKeyPoses3D->points[i]);
 
-    // extract all the nearby key poses and downsample them
-    kdtreeSurroundingKeyPoses->setInputCloud(cloudKeyPoses3D); // create kd-tree
-    kdtreeSurroundingKeyPoses->radiusSearch(currentPose, (double)surroundingKeyframeSearchRadius, pointSearchInd, pointSearchSqDis);
-    for (int i = 0; i < (int)pointSearchInd.size(); ++i)
-    {
-        int id = pointSearchInd[i];
-        surroundingKeyPoses->push_back(cloudKeyPoses3D->points[id]);
-    }
-
-    downSizeFilterSurroundingKeyPoses.setInputCloud(surroundingKeyPoses);
-    downSizeFilterSurroundingKeyPoses.filter(*surroundingKeyPosesDS);
-    for(auto& pt : surroundingKeyPosesDS->points)
-    {
-        kdtreeSurroundingKeyPoses->nearestKSearch(pt, 1, pointSearchInd, pointSearchSqDis);
-        pt.intensity = cloudKeyPoses3D->points[pointSearchInd[0]].intensity;
-    }
-
-    // localization -----------------------------------------------------------------------------------------------
-    kdtreeSurroundingKeyPoses->setInputCloud(cloudKeyPoses3D); // create kd-tree
-    float search_range_iter = 1;
-    do{
-        if(search_range_iter > 10){
-            RCLCPP_ERROR(rclcpp::get_logger("localization"), "can't search keyframe in 50m");
-            return;
-        }
-        kdtreeSurroundingKeyPoses->radiusSearch(currentPose, collectKeyframeRange * search_range_iter, pointSearchInd, pointSearchSqDis);
-        search_range_iter++;
-    }while(pointSearchInd.size() < 10);
-
-
-    for (int i = 0; i < (int)pointSearchInd.size(); ++i)
-    {
-        int id = pointSearchInd[i];
-        surroundingKeyPosesDS->push_back(cloudKeyPoses3D->points[id]);
-        if(i > 15)
-            break;
-    }
-    // -------------------------------------------------------------------------------------------------------------
-
-    // output : keypose in 5m + downsampled keypose in surroundingKeyframeSearchRadius
-
-    extractCloud(surroundingKeyPosesDS);
+    extractCloud(surroundingKeyPoses);
 }
 
 void MapOptimization::extractCloud(pcl::PointCloud<PointType>::Ptr cloudToExtract)
@@ -207,7 +167,7 @@ void MapOptimization::extractCloud(pcl::PointCloud<PointType>::Ptr cloudToExtrac
     downSizeFilterSurf.filter(*laserCloudSurfFromMapDS);
 
     // clear map cache if too large
-    if (laserCloudMapContainer.size() > 1000)
+    if (laserCloudMapContainer.size() > 50)
         laserCloudMapContainer.clear();
 }
 
@@ -541,6 +501,8 @@ bool MapOptimization::LMOptimization(int iterCount)
 
 void MapOptimization::scan2MapOptimization()
 {
+    if (cloudKeyPoses3D->points.empty())
+        return;
 
     if (laserCloudCornerLastDSNum > edgeFeatureMinValidNum && laserCloudSurfLastDSNum > surfFeatureMinValidNum)
     {
@@ -566,6 +528,7 @@ void MapOptimization::scan2MapOptimization()
         RCLCPP_WARN(get_logger(), "Not enough features! Only %d edge and %d planar features available.", laserCloudCornerLastDSNum, laserCloudSurfLastDSNum);
     }
 }
+
 
 void MapOptimization::transformUpdate()
 {
@@ -600,4 +563,267 @@ void MapOptimization::transformUpdate()
     incrementalOdometryAffineBack = trans2Affine3f(transformTobeMapped);
 }
 
+
+bool MapOptimization::saveFrame()
+{
+    if (cloudKeyPoses3D->points.empty())
+        return true;
+
+    if (sensor == SensorType::LIVOX)
+    {
+        if (timeLaserInfoCur - cloudKeyPoses6D->back().time > 1.0)
+            return true;
+    }
+
+    Eigen::Affine3f transStart = pclPointToAffine3f(cloudKeyPoses6D->back());
+    Eigen::Affine3f transFinal = pcl::getTransformation(transformTobeMapped[3], transformTobeMapped[4], transformTobeMapped[5],
+                                                        transformTobeMapped[0], transformTobeMapped[1], transformTobeMapped[2]);
+    Eigen::Affine3f transBetween = transStart.inverse() * transFinal;
+    float x, y, z, roll, pitch, yaw;
+    pcl::getTranslationAndEulerAngles(transBetween, x, y, z, roll, pitch, yaw);
+
+    if (abs(roll)  < surroundingkeyframeAddingAngleThreshold &&
+        abs(pitch) < surroundingkeyframeAddingAngleThreshold &&
+        abs(yaw)   < surroundingkeyframeAddingAngleThreshold &&
+        sqrt(x*x + y*y + z*z) < surroundingkeyframeAddingDistThreshold)
+        return false;
+
+    return true;
+}
+
+void MapOptimization::addOdomFactor()
+{
+    if (cloudKeyPoses3D->points.empty())
+    {
+        noiseModel::Diagonal::shared_ptr priorNoise = noiseModel::Diagonal::Variances((Vector(6) << 1e-2, 1e-2, M_PI*M_PI, 1e8, 1e8, 1e8).finished()); // rad*rad, meter*meter
+        gtSAMgraph.add(PriorFactor<Pose3>(0, trans2gtsamPose(transformTobeMapped), priorNoise));
+        initialEstimate.insert(0, trans2gtsamPose(transformTobeMapped));
+    }else{
+        noiseModel::Diagonal::shared_ptr odometryNoise = noiseModel::Diagonal::Variances((Vector(6) << 1e-6, 1e-6, 1e-6, 1e-4, 1e-4, 1e-4).finished());
+        gtsam::Pose3 poseFrom = pclPointTogtsamPose3(cloudKeyPoses6D->points.back());
+        gtsam::Pose3 poseTo   = trans2gtsamPose(transformTobeMapped);
+        gtSAMgraph.add(BetweenFactor<Pose3>(cloudKeyPoses3D->size()-1, cloudKeyPoses3D->size(), poseFrom.between(poseTo), odometryNoise));
+        initialEstimate.insert(cloudKeyPoses3D->size(), poseTo);
+    }
+}
+
+void MapOptimization::addGPSFactor()
+{
+    if (gpsQueue.empty())
+        return;
+
+    // wait for system initialized and settles down
+    if (cloudKeyPoses3D->points.empty())
+        return;
+    else
+    {
+        if (pointDistance(cloudKeyPoses3D->front(), cloudKeyPoses3D->back()) < 5.0)
+            return;
+    }
+
+    // pose covariance small, no need to correct
+    if (poseCovariance(3,3) < poseCovThreshold && poseCovariance(4,4) < poseCovThreshold)
+        return;
+
+    // last gps position
+    static PointType lastGPSPoint;
+
+    while (!gpsQueue.empty())
+    {
+        if (stamp2Sec(gpsQueue.front().header.stamp) < timeLaserInfoCur - 0.2)
+        {
+            // message too old
+            gpsQueue.pop_front();
+        }
+        else if (stamp2Sec(gpsQueue.front().header.stamp) > timeLaserInfoCur + 0.2)
+        {
+            // message too new
+            break;
+        }
+        else
+        {
+            nav_msgs::msg::Odometry thisGPS = gpsQueue.front();
+            gpsQueue.pop_front();
+
+            // GPS too noisy, skip
+            float noise_x = thisGPS.pose.covariance[0];
+            float noise_y = thisGPS.pose.covariance[7];
+            float noise_z = thisGPS.pose.covariance[14];
+            if (noise_x > gpsCovThreshold || noise_y > gpsCovThreshold)
+                continue;
+            float gps_x = thisGPS.pose.pose.position.x;
+            float gps_y = thisGPS.pose.pose.position.y;
+            float gps_z = thisGPS.pose.pose.position.z;
+            if (!useGpsElevation)
+            {
+                gps_z = transformTobeMapped[5];
+                noise_z = 0.01;
+            }
+
+            // GPS not properly initialized (0,0,0)
+            if (abs(gps_x) < 1e-6 && abs(gps_y) < 1e-6)
+                continue;
+
+            // Add GPS every a few meters
+            PointType curGPSPoint;
+            curGPSPoint.x = gps_x;
+            curGPSPoint.y = gps_y;
+            curGPSPoint.z = gps_z;
+            if (pointDistance(curGPSPoint, lastGPSPoint) < 5.0)
+                continue;
+            else
+                lastGPSPoint = curGPSPoint;
+
+            gtsam::Vector Vector3(3);
+            Vector3 << max(noise_x, 1.0f), max(noise_y, 1.0f), max(noise_z, 1.0f);
+            noiseModel::Diagonal::shared_ptr gps_noise = noiseModel::Diagonal::Variances(Vector3);
+            gtsam::GPSFactor gps_factor(cloudKeyPoses3D->size(), gtsam::Point3(gps_x, gps_y, gps_z), gps_noise);
+            gtSAMgraph.add(gps_factor);
+
+            aLoopIsClosed = true;
+            break;
+        }
+    }
+}
+
+void MapOptimization::addGlobalMatchingFactor() {
+    if(globalMatchingResult.empty())
+        return;
+
+    mtxGlobalMatching.lock();
+    auto [idx, roll, pitch, yaw, x, y, z, rot_var, pos_var] = globalMatchingResult.back();
+    globalMatchingResult.pop_back();
+    mtxGlobalMatching.unlock();
+
+    gtsam::noiseModel::Diagonal::shared_ptr pose_noise = noiseModel::Diagonal::Variances(
+            (Vector(6) << pos_var, pos_var, pos_var, rot_var, rot_var, rot_var).finished());
+    gtsam::PriorFactor<gtsam::Pose3> pose_factor(
+            idx,
+            gtsam::Pose3(gtsam::Rot3::RzRyRx(roll, pitch, yaw), gtsam::Point3(x, y, z)),
+            pose_noise);
+    gtSAMgraph.add(pose_factor);
+
+    aLoopIsClosed = true;
+}
+
+void MapOptimization::saveKeyFramesAndFactor()
+{
+    if (saveFrame() == false)
+        return;
+
+    // odom factor
+    addOdomFactor();
+
+    // gps factor
+    addGPSFactor();
+
+    // loop factor
+    addGlobalMatchingFactor();
+
+    // cout << "****************************************************" << endl;
+    // gtSAMgraph.print("GTSAM Graph:\n");
+
+    // update iSAM
+    isam->update(gtSAMgraph, initialEstimate);
+    isam->update();
+
+    if (aLoopIsClosed == true)
+    {
+        isam->update();
+        isam->update();
+        isam->update();
+        isam->update();
+        isam->update();
+    }
+
+    gtSAMgraph.resize(0);
+    initialEstimate.clear();
+
+    //save key poses
+    PointType thisPose3D;
+    PointTypePose thisPose6D;
+    Pose3 latestEstimate;
+
+    isamCurrentEstimate = isam->calculateEstimate();
+    latestEstimate = isamCurrentEstimate.at<Pose3>(isamCurrentEstimate.size()-1);
+    // cout << "****************************************************" << endl;
+    // isamCurrentEstimate.print("Current estimate: ");
+
+    thisPose3D.x = latestEstimate.translation().x();
+    thisPose3D.y = latestEstimate.translation().y();
+    thisPose3D.z = latestEstimate.translation().z();
+    thisPose3D.intensity = cloudKeyPoses3D->size(); // this can be used as index
+
+    cloudKeyPoses3D->push_back(thisPose3D);
+
+    thisPose6D.x = thisPose3D.x;
+    thisPose6D.y = thisPose3D.y;
+    thisPose6D.z = thisPose3D.z;
+    thisPose6D.intensity = thisPose3D.intensity ; // this can be used as index
+    thisPose6D.roll  = latestEstimate.rotation().roll();
+    thisPose6D.pitch = latestEstimate.rotation().pitch();
+    thisPose6D.yaw   = latestEstimate.rotation().yaw();
+    thisPose6D.time = timeLaserInfoCur;
+    cloudKeyPoses6D->push_back(thisPose6D);
+
+    // cout << "****************************************************" << endl;
+    // cout << "Pose covariance:" << endl;
+    // cout << isam->marginalCovariance(isamCurrentEstimate.size()-1) << endl << endl;
+    poseCovariance = isam->marginalCovariance(isamCurrentEstimate.size()-1);
+
+    // save updated transform
+    transformTobeMapped[0] = latestEstimate.rotation().roll();
+    transformTobeMapped[1] = latestEstimate.rotation().pitch();
+    transformTobeMapped[2] = latestEstimate.rotation().yaw();
+    transformTobeMapped[3] = latestEstimate.translation().x();
+    transformTobeMapped[4] = latestEstimate.translation().y();
+    transformTobeMapped[5] = latestEstimate.translation().z();
+
+    // save all the received edge and surf points
+    pcl::PointCloud<PointType>::Ptr thisCornerKeyFrame(new pcl::PointCloud<PointType>());
+    pcl::PointCloud<PointType>::Ptr thisSurfKeyFrame(new pcl::PointCloud<PointType>());
+    pcl::copyPointCloud(*laserCloudCornerLastDS,  *thisCornerKeyFrame);
+    pcl::copyPointCloud(*laserCloudSurfLastDS,    *thisSurfKeyFrame);
+
+    // save key frame cloud
+    cornerCloudKeyFrames.push_back(thisCornerKeyFrame);
+    surfCloudKeyFrames.push_back(thisSurfKeyFrame);
+
+    // save path for visualization
+    updatePath(thisPose6D);
+}
+
+
+void MapOptimization::correctPoses()
+{
+    if (cloudKeyPoses3D->points.empty())
+        return;
+
+    if (aLoopIsClosed == true)
+    {
+        // clear map cache
+        laserCloudMapContainer.clear();
+        // clear path
+        globalPath.poses.clear();
+        // update key poses
+        int numPoses = isamCurrentEstimate.size();
+        for (int i = 0; i < numPoses; ++i)
+        {
+            cloudKeyPoses3D->points[i].x = isamCurrentEstimate.at<Pose3>(i).translation().x();
+            cloudKeyPoses3D->points[i].y = isamCurrentEstimate.at<Pose3>(i).translation().y();
+            cloudKeyPoses3D->points[i].z = isamCurrentEstimate.at<Pose3>(i).translation().z();
+
+            cloudKeyPoses6D->points[i].x = cloudKeyPoses3D->points[i].x;
+            cloudKeyPoses6D->points[i].y = cloudKeyPoses3D->points[i].y;
+            cloudKeyPoses6D->points[i].z = cloudKeyPoses3D->points[i].z;
+            cloudKeyPoses6D->points[i].roll  = isamCurrentEstimate.at<Pose3>(i).rotation().roll();
+            cloudKeyPoses6D->points[i].pitch = isamCurrentEstimate.at<Pose3>(i).rotation().pitch();
+            cloudKeyPoses6D->points[i].yaw   = isamCurrentEstimate.at<Pose3>(i).rotation().yaw();
+
+            updatePath(cloudKeyPoses6D->points[i]);
+        }
+
+        aLoopIsClosed = false;
+    }
+}
 

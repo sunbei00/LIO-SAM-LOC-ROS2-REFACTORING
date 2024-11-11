@@ -16,7 +16,7 @@ if (POLICY CMP0148)
   cmake_policy(SET CMP0148 NEW)
 endif()
 
-# set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Debug)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release)
 endif()
@@ -56,6 +56,7 @@ include_directories(
 
 set(COMMON_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/utils/QoS.cpp")
 set(PCL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/utils/pclUtils.cpp")
+set(GTSAM_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/utils/gtsamUtils.cpp")
 
 set(COMMON_DEP1 rclcpp rclpy  tf2_eigen tf2_geometry_msgs pcl_conversions)
 set(COMMON_DEP2 ${COMMON_DEP1} nav_msgs sensor_msgs std_msgs)
@@ -108,16 +109,20 @@ add_executable(${PROJECT_NAME}_mapOptimization
         src/components/MOInitializer.cpp
         src/components/MOVisualize.cpp
         src/components/MOPublish.cpp
+        src/components/MOGlobalMatching.cpp
         src/components/MOLocalization.cpp
         ${COMMON_SRC}
-        ${PCL_SRC})
+        ${PCL_SRC}
+        ${GTSAM_SRC})
 ament_target_dependencies(${PROJECT_NAME}_mapOptimization
         ${COMMON_DEP2}
         PCL
         visualization_msgs
         tf2
-        OpenCV)
+        OpenCV
+        GTSAM)
 target_link_libraries(${PROJECT_NAME}_mapOptimization
+        gtsam
         "${cpp_typesupport_target}"
         ${USE_OPENMP})
 

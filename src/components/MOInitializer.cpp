@@ -3,10 +3,10 @@
 
 MapOptimization::MapOptimization(const rclcpp::NodeOptions & options) : ParamServer("lio_sam_MapOptimization", options)
 {
-//    ISAM2Params parameters;
-//    parameters.relinearizeThreshold = 0.1;
-//    parameters.relinearizeSkip = 1;
-//    isam = new ISAM2(parameters);
+    ISAM2Params parameters;
+    parameters.relinearizeThreshold = 0.1;
+    parameters.relinearizeSkip = 1;
+    isam = new ISAM2(parameters);
 
     pubKeyPoses = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/trajectory", 1);
     pubLaserCloudSurround = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/map_global", 1);
@@ -60,8 +60,6 @@ void MapOptimization::allocateMemory()
 {
     cloudKeyPoses3D.reset(new pcl::PointCloud<PointType>());
     cloudKeyPoses6D.reset(new pcl::PointCloud<PointTypePose>());
-    copy_cloudKeyPoses3D.reset(new pcl::PointCloud<PointType>());
-    copy_cloudKeyPoses6D.reset(new pcl::PointCloud<PointTypePose>());
 
     kdtreeSurroundingKeyPoses.reset(new pcl::KdTreeFLANN<PointType>());
     kdtreeHistoryKeyPoses.reset(new pcl::KdTreeFLANN<PointType>());
@@ -91,6 +89,14 @@ void MapOptimization::allocateMemory()
 
     kdtreeCornerFromMap.reset(new pcl::KdTreeFLANN<PointType>());
     kdtreeSurfFromMap.reset(new pcl::KdTreeFLANN<PointType>());
+
+    cornerPrebuiltMap.reset(new pcl::PointCloud<PointType>());
+    surfPrebuiltMap.reset(new pcl::PointCloud<PointType>());
+    subCornerPrebuiltMap.reset(new pcl::PointCloud<PointType>());
+    subSurfPrebuiltMap.reset(new pcl::PointCloud<PointType>());
+    combinedPrebuiltMap.reset(new pcl::PointCloud<PointType>());
+    kfPrebuilt3D.reset(new pcl::PointCloud<PointType>());
+    kfPrebuilt6D.reset(new pcl::PointCloud<PointTypePose>());
 
     for (int i = 0; i < 6; ++i)
         transformTobeMapped[i] = 0;

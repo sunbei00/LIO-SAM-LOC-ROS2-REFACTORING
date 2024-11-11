@@ -110,6 +110,11 @@ public:
     bool keyframeCloud;
     bool keyframeGPS;
 
+    // global matching
+    int numberOfKeyframeForTempolarMap;
+    float globalMatchingFrequency;
+    float globalMatchingFitnessScore;
+
     ParamServer(std::string node_name, const rclcpp::NodeOptions & options) : Node(node_name, options)
     {
         declare_parameter("pointCloudTopic", "points");
@@ -282,6 +287,13 @@ public:
         declare_parameter("localizationFitnessScore", 0.3);
         get_parameter("localizationFitnessScore", localizationFitnessScore);
 
+        declare_parameter("numberOfKeyframeForTempolarMap", 10);
+        get_parameter("numberOfKeyframeForTempolarMap", numberOfKeyframeForTempolarMap);
+        declare_parameter("globalMatchingFrequency", 1.0);
+        get_parameter("globalMatchingFrequency", globalMatchingFrequency);
+
+        declare_parameter("globalMatchingFitnessScore", 0.5);
+        get_parameter("globalMatchingFitnessScore", globalMatchingFitnessScore);
 
         usleep(100);
     }
