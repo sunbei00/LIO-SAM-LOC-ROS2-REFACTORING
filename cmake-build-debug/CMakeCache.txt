@@ -776,10 +776,10 @@ X11_X11_INCLUDE_PATH:PATH=/usr/include
 X11_X11_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libX11.so
 
 //Path to a file.
-X11_X11_xcb_INCLUDE_PATH:PATH=X11_X11_xcb_INCLUDE_PATH-NOTFOUND
+X11_X11_xcb_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_X11_xcb_LIB:FILEPATH=X11_X11_xcb_LIB-NOTFOUND
+X11_X11_xcb_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libX11-xcb.so
 
 //Path to a file.
 X11_XRes_INCLUDE_PATH:PATH=/usr/include
@@ -953,40 +953,40 @@ X11_xcb_INCLUDE_PATH:PATH=/usr/include
 X11_xcb_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb.so
 
 //Path to a file.
-X11_xcb_composite_INCLUDE_PATH:PATH=X11_xcb_composite_INCLUDE_PATH-NOTFOUND
+X11_xcb_composite_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_composite_LIB:FILEPATH=X11_xcb_composite_LIB-NOTFOUND
+X11_xcb_composite_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-composite.so
 
 //Path to a file.
-X11_xcb_cursor_INCLUDE_PATH:PATH=X11_xcb_cursor_INCLUDE_PATH-NOTFOUND
+X11_xcb_cursor_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_cursor_LIB:FILEPATH=X11_xcb_cursor_LIB-NOTFOUND
+X11_xcb_cursor_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-cursor.so
 
 //Path to a file.
-X11_xcb_damage_INCLUDE_PATH:PATH=X11_xcb_damage_INCLUDE_PATH-NOTFOUND
+X11_xcb_damage_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_damage_LIB:FILEPATH=X11_xcb_damage_LIB-NOTFOUND
+X11_xcb_damage_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-damage.so
 
 //Path to a file.
-X11_xcb_dpms_INCLUDE_PATH:PATH=X11_xcb_dpms_INCLUDE_PATH-NOTFOUND
+X11_xcb_dpms_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_dpms_LIB:FILEPATH=X11_xcb_dpms_LIB-NOTFOUND
+X11_xcb_dpms_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-dpms.so
 
 //Path to a file.
-X11_xcb_dri2_INCLUDE_PATH:PATH=X11_xcb_dri2_INCLUDE_PATH-NOTFOUND
+X11_xcb_dri2_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_dri2_LIB:FILEPATH=X11_xcb_dri2_LIB-NOTFOUND
+X11_xcb_dri2_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-dri2.so
 
 //Path to a file.
-X11_xcb_dri3_INCLUDE_PATH:PATH=X11_xcb_dri3_INCLUDE_PATH-NOTFOUND
+X11_xcb_dri3_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_dri3_LIB:FILEPATH=X11_xcb_dri3_LIB-NOTFOUND
+X11_xcb_dri3_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-dri3.so
 
 //Path to a file.
 X11_xcb_errors_INCLUDE_PATH:PATH=X11_xcb_errors_INCLUDE_PATH-NOTFOUND
@@ -995,154 +995,154 @@ X11_xcb_errors_INCLUDE_PATH:PATH=X11_xcb_errors_INCLUDE_PATH-NOTFOUND
 X11_xcb_errors_LIB:FILEPATH=X11_xcb_errors_LIB-NOTFOUND
 
 //Path to a file.
-X11_xcb_ewmh_INCLUDE_PATH:PATH=X11_xcb_ewmh_INCLUDE_PATH-NOTFOUND
+X11_xcb_ewmh_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_ewmh_LIB:FILEPATH=X11_xcb_ewmh_LIB-NOTFOUND
+X11_xcb_ewmh_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-ewmh.so
 
 //Path to a file.
-X11_xcb_glx_INCLUDE_PATH:PATH=X11_xcb_glx_INCLUDE_PATH-NOTFOUND
+X11_xcb_glx_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_glx_LIB:FILEPATH=X11_xcb_glx_LIB-NOTFOUND
+X11_xcb_glx_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-glx.so
 
 //Path to a file.
-X11_xcb_icccm_INCLUDE_PATH:PATH=X11_xcb_icccm_INCLUDE_PATH-NOTFOUND
+X11_xcb_icccm_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_icccm_LIB:FILEPATH=X11_xcb_icccm_LIB-NOTFOUND
+X11_xcb_icccm_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-icccm.so
 
 //Path to a file.
-X11_xcb_image_INCLUDE_PATH:PATH=X11_xcb_image_INCLUDE_PATH-NOTFOUND
+X11_xcb_image_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_image_LIB:FILEPATH=X11_xcb_image_LIB-NOTFOUND
+X11_xcb_image_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-image.so
 
 //Path to a file.
-X11_xcb_keysyms_INCLUDE_PATH:PATH=X11_xcb_keysyms_INCLUDE_PATH-NOTFOUND
+X11_xcb_keysyms_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_keysyms_LIB:FILEPATH=X11_xcb_keysyms_LIB-NOTFOUND
+X11_xcb_keysyms_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-keysyms.so
 
 //Path to a file.
-X11_xcb_present_INCLUDE_PATH:PATH=X11_xcb_present_INCLUDE_PATH-NOTFOUND
+X11_xcb_present_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_present_LIB:FILEPATH=X11_xcb_present_LIB-NOTFOUND
+X11_xcb_present_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-present.so
 
 //Path to a file.
-X11_xcb_randr_INCLUDE_PATH:PATH=X11_xcb_randr_INCLUDE_PATH-NOTFOUND
+X11_xcb_randr_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_randr_LIB:FILEPATH=X11_xcb_randr_LIB-NOTFOUND
+X11_xcb_randr_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-randr.so
 
 //Path to a file.
-X11_xcb_record_INCLUDE_PATH:PATH=X11_xcb_record_INCLUDE_PATH-NOTFOUND
+X11_xcb_record_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_record_LIB:FILEPATH=X11_xcb_record_LIB-NOTFOUND
+X11_xcb_record_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-record.so
 
 //Path to a file.
-X11_xcb_render_INCLUDE_PATH:PATH=X11_xcb_render_INCLUDE_PATH-NOTFOUND
+X11_xcb_render_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_render_LIB:FILEPATH=X11_xcb_render_LIB-NOTFOUND
+X11_xcb_render_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-render.so
 
 //Path to a file.
-X11_xcb_render_util_INCLUDE_PATH:PATH=X11_xcb_render_util_INCLUDE_PATH-NOTFOUND
+X11_xcb_render_util_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_render_util_LIB:FILEPATH=X11_xcb_render_util_LIB-NOTFOUND
+X11_xcb_render_util_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-render-util.so
 
 //Path to a file.
-X11_xcb_res_INCLUDE_PATH:PATH=X11_xcb_res_INCLUDE_PATH-NOTFOUND
+X11_xcb_res_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_res_LIB:FILEPATH=X11_xcb_res_LIB-NOTFOUND
+X11_xcb_res_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-res.so
 
 //Path to a file.
-X11_xcb_screensaver_INCLUDE_PATH:PATH=X11_xcb_screensaver_INCLUDE_PATH-NOTFOUND
+X11_xcb_screensaver_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_screensaver_LIB:FILEPATH=X11_xcb_screensaver_LIB-NOTFOUND
+X11_xcb_screensaver_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-screensaver.so
 
 //Path to a file.
-X11_xcb_shape_INCLUDE_PATH:PATH=X11_xcb_shape_INCLUDE_PATH-NOTFOUND
+X11_xcb_shape_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_shape_LIB:FILEPATH=X11_xcb_shape_LIB-NOTFOUND
+X11_xcb_shape_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-shape.so
 
 //Path to a file.
-X11_xcb_shm_INCLUDE_PATH:PATH=X11_xcb_shm_INCLUDE_PATH-NOTFOUND
+X11_xcb_shm_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_shm_LIB:FILEPATH=X11_xcb_shm_LIB-NOTFOUND
+X11_xcb_shm_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-shm.so
 
 //Path to a file.
-X11_xcb_sync_INCLUDE_PATH:PATH=X11_xcb_sync_INCLUDE_PATH-NOTFOUND
+X11_xcb_sync_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_sync_LIB:FILEPATH=X11_xcb_sync_LIB-NOTFOUND
+X11_xcb_sync_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-sync.so
 
 //Path to a file.
-X11_xcb_util_INCLUDE_PATH:PATH=X11_xcb_util_INCLUDE_PATH-NOTFOUND
+X11_xcb_util_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_util_LIB:FILEPATH=X11_xcb_util_LIB-NOTFOUND
+X11_xcb_util_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-util.so
 
 //Path to a file.
-X11_xcb_xf86dri_INCLUDE_PATH:PATH=X11_xcb_xf86dri_INCLUDE_PATH-NOTFOUND
+X11_xcb_xf86dri_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_xf86dri_LIB:FILEPATH=X11_xcb_xf86dri_LIB-NOTFOUND
+X11_xcb_xf86dri_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-xf86dri.so
 
 //Path to a file.
-X11_xcb_xfixes_INCLUDE_PATH:PATH=X11_xcb_xfixes_INCLUDE_PATH-NOTFOUND
+X11_xcb_xfixes_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_xfixes_LIB:FILEPATH=X11_xcb_xfixes_LIB-NOTFOUND
+X11_xcb_xfixes_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-xfixes.so
 
 //Path to a file.
-X11_xcb_xinerama_INCLUDE_PATH:PATH=X11_xcb_xinerama_INCLUDE_PATH-NOTFOUND
+X11_xcb_xinerama_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_xinerama_LIB:FILEPATH=X11_xcb_xinerama_LIB-NOTFOUND
+X11_xcb_xinerama_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-xinerama.so
 
 //Path to a file.
-X11_xcb_xinput_INCLUDE_PATH:PATH=X11_xcb_xinput_INCLUDE_PATH-NOTFOUND
+X11_xcb_xinput_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_xinput_LIB:FILEPATH=X11_xcb_xinput_LIB-NOTFOUND
+X11_xcb_xinput_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-xinput.so
 
 //Path to a file.
-X11_xcb_xkb_INCLUDE_PATH:PATH=X11_xcb_xkb_INCLUDE_PATH-NOTFOUND
+X11_xcb_xkb_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_xkb_LIB:FILEPATH=X11_xcb_xkb_LIB-NOTFOUND
+X11_xcb_xkb_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-xkb.so
 
 //Path to a file.
-X11_xcb_xrm_INCLUDE_PATH:PATH=X11_xcb_xrm_INCLUDE_PATH-NOTFOUND
+X11_xcb_xrm_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_xrm_LIB:FILEPATH=X11_xcb_xrm_LIB-NOTFOUND
+X11_xcb_xrm_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-xrm.so
 
 //Path to a file.
-X11_xcb_xtest_INCLUDE_PATH:PATH=X11_xcb_xtest_INCLUDE_PATH-NOTFOUND
+X11_xcb_xtest_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_xtest_LIB:FILEPATH=X11_xcb_xtest_LIB-NOTFOUND
+X11_xcb_xtest_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-xtest.so
 
 //Path to a file.
-X11_xcb_xv_INCLUDE_PATH:PATH=X11_xcb_xv_INCLUDE_PATH-NOTFOUND
+X11_xcb_xv_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_xv_LIB:FILEPATH=X11_xcb_xv_LIB-NOTFOUND
+X11_xcb_xv_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-xv.so
 
 //Path to a file.
-X11_xcb_xvmc_INCLUDE_PATH:PATH=X11_xcb_xvmc_INCLUDE_PATH-NOTFOUND
+X11_xcb_xvmc_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xcb_xvmc_LIB:FILEPATH=X11_xcb_xvmc_LIB-NOTFOUND
+X11_xcb_xvmc_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxcb-xvmc.so
 
 //Path to a file.
 X11_xkbcommon_INCLUDE_PATH:PATH=/usr/include
@@ -1151,10 +1151,10 @@ X11_xkbcommon_INCLUDE_PATH:PATH=/usr/include
 X11_xkbcommon_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxkbcommon.so
 
 //Path to a file.
-X11_xkbcommon_X11_INCLUDE_PATH:PATH=X11_xkbcommon_X11_INCLUDE_PATH-NOTFOUND
+X11_xkbcommon_X11_INCLUDE_PATH:PATH=/usr/include
 
 //Path to a library.
-X11_xkbcommon_X11_LIB:FILEPATH=X11_xkbcommon_X11_LIB-NOTFOUND
+X11_xkbcommon_X11_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libxkbcommon-x11.so
 
 //Path to a file.
 X11_xkbfile_INCLUDE_PATH:PATH=/usr/include

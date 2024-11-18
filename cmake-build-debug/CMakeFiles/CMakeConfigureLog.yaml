@@ -1023,3 +1023,41 @@ events:
         
       exitCode: 0
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/root/share/sw/clion-2024.2.3/bin/cmake/linux/x64/share/cmake-3.29/Modules/FindMPI.cmake:1278 (try_compile)"
+      - "/root/share/sw/clion-2024.2.3/bin/cmake/linux/x64/share/cmake-3.29/Modules/FindMPI.cmake:1322 (_MPI_try_staged_settings)"
+      - "/root/share/sw/clion-2024.2.3/bin/cmake/linux/x64/share/cmake-3.29/Modules/FindMPI.cmake:1645 (_MPI_check_lang_works)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/VTK-vtk-module-find-packages.cmake:397 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/vtk-config.cmake:150 (include)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:270 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:319 (find_VTK)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:540 (find_external_library)"
+      - "/opt/ros/humble/share/pcl_conversions/cmake/ament_cmake_export_dependencies-extras.cmake:21 (find_package)"
+      - "/opt/ros/humble/share/pcl_conversions/cmake/pcl_conversionsConfig.cmake:41 (include)"
+      - "CMakeLists.txt:34 (find_package)"
+    description: "The MPI test test_mpi for C in mode normal"
+    directories:
+      source: "/root/humble_ws/src/LIO-SAM-LOC/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-ovqxPu"
+      binary: "/root/humble_ws/src/LIO-SAM-LOC/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-ovqxPu"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/patches/99;/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1;/opt/ros/humble/share/fastrtps_cmake_module/cmake/Modules;/usr/lib/x86_64-linux-gnu/cmake/pcl/Modules"
+    buildResult:
+      variable: "MPI_RESULT_C_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/root/humble_ws/src/LIO-SAM-LOC/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-ovqxPu'
+        
+        Run Build Command(s): /root/share/sw/clion-2024.2.3/bin/ninja/linux/x64/ninja -v cmTC_a0d60
+        [1/2] /usr/bin/cc  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -fdiagnostics-color=always -o CMakeFiles/cmTC_a0d60.dir/test_mpi.c.o -c /root/humble_ws/src/LIO-SAM-LOC/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-ovqxPu/test_mpi.c
+        [2/2] : && /usr/bin/cc  -L/usr/lib/x86_64-linux-gnu/openmpi/lib CMakeFiles/cmTC_a0d60.dir/test_mpi.c.o -o cmTC_a0d60  /usr/lib/x86_64-linux-gnu/libmpi.so && :
+        
+      exitCode: 0
+...

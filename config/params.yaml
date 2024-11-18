@@ -1,6 +1,17 @@
 /**:
   ros__parameters:
 
+    # Localization setting
+    useKeyFrame: true
+    localizationMethod: "rviz"                  # rviz, keyframe, gps
+    collectKeyframeRange: 3.0                   # if use keyframe
+    localizationFitnessScore: 0.3               #
+
+    # Global Matching
+    numberOfKeyframeForTempolarMap: 20          #
+    globalMatchingFrequency: 0.2                # Hz
+    globalMatchingFitnessScore: 0.5
+
     # Topics
     pointCloudTopic: "/velodyne_points"          # Point cloud data
     imuTopic: "/imu"                             # IMU data
@@ -15,6 +26,7 @@
 
     # GPS Settings
     useImuHeadingInitialization: false           # if using GPS data, set to "true"
+                                                 # if using 6Axis-IMU, set to "false"
     useGpsElevation: false                       # if GPS elevation is bad, set to "false"
     gpsCovThreshold: 2.0                         # m^2, threshold for using GPS data
     poseCovThreshold: 25.0                       # m^2, threshold for using GPS data
@@ -27,18 +39,6 @@
     defaultMapInfo: true
     keyframeCloud: true
     keyframeGPS: true
-
-    # Localization setting
-    useKeyFrame: true
-    localizationMethod: "keyframe"              # rviz, keyframe, gps
-    collectKeyframeRange: 3.0                   # if use keyframe
-    localizationFitnessScore: 0.3               #
-
-    # Global Matching
-    numberOfKeyframeForTempolarMap: 20          #
-    globalMatchingFrequency: 0.2                # Hz
-    globalMatchingFitnessScore: 0.5
-
 
     # Sensor Settings
     sensor: velodyne                            # lidar sensor type, 'velodyne' or 'ouster' or 'livox'

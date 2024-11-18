@@ -41,7 +41,7 @@ void MapOptimization::publishOdometry()
         increOdomAffine = increOdomAffine * affineIncre;
         float x, y, z, roll, pitch, yaw;
         pcl::getTranslationAndEulerAngles (increOdomAffine, x, y, z, roll, pitch, yaw);
-        if (cloudInfo.imu_available == true)
+        if (cloudInfo.imu_available == true && useImuHeadingInitialization) // useImuHeadingInitialization - true : 9Axis-IMU, false : 6Axis-IMU
         {
             if (std::abs(cloudInfo.imu_pitch_init) < 1.4)
             {
