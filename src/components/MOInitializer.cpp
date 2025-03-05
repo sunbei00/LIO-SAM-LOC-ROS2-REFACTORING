@@ -49,6 +49,9 @@ MapOptimization::MapOptimization(const rclcpp::NodeOptions & options) : ParamSer
     pubGlobalMap = create_publisher<sensor_msgs::msg::PointCloud2>("/lio_sam/mapping/cloud_registered", 1);
     // ------------------------------------------------------------
 
+    subNavFix = this->create_subscription<sensor_msgs::msg::NavSatFix>(
+            navFixTopic, 10, std::bind(&MapOptimization::navSatFixCallback, this, std::placeholders::_1));
+
     allocateMemory();
 
     // localization ------------------------------------------------
@@ -97,6 +100,8 @@ void MapOptimization::allocateMemory()
     combinedPrebuiltMap.reset(new pcl::PointCloud<PointType>());
     kfPrebuilt3D.reset(new pcl::PointCloud<PointType>());
     kfPrebuilt6D.reset(new pcl::PointCloud<PointTypePose>());
+
+    gpsKFPrebuilt.reset(new pcl::PointCloud<PointTypeXYI>());
 
     for (int i = 0; i < 6; ++i)
         transformTobeMapped[i] = 0;

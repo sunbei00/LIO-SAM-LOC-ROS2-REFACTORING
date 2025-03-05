@@ -10,8 +10,6 @@ void MapOptimization::globalMatchingThread()
         rate.sleep();
         if(!system_initialized)
             continue;
-        if(cloudKeyPoses3D->size() < numberOfKeyframeForTempolarMap)
-            continue;
         globalMatching();
     }
 }
@@ -71,7 +69,7 @@ void MapOptimization::globalMatching() {
 
         pcl::KdTreeFLANN<PointType>::Ptr kdtreeKeyPosesForGlobalMatching(new pcl::KdTreeFLANN<PointType>());
         kdtreeKeyPosesForGlobalMatching->setInputCloud(kfPrebuilt3D);
-        kdtreeKeyPosesForGlobalMatching->radiusSearch(currentPosition, collectKeyframeRange * 5.0f, pointSearchInd,
+        kdtreeKeyPosesForGlobalMatching->radiusSearch(currentPosition, collectKeyframeRange * 3.0f, pointSearchInd,
                                                       pointSearchSqDis);
 
         //RCLCPP_INFO(rclcpp::get_logger("global matching"), "searched key-poses size : %d", pointSearchInd.size());
@@ -115,6 +113,8 @@ void MapOptimization::globalMatching() {
         std::lock_guard<std::mutex> lock(mtx);
         pcl::PointCloud<PointType>::Ptr surroundingKeyPoses(new pcl::PointCloud<PointType>());
         int numPoses = copy_cloudKeyPoses3D->size();
+        if(numPoses <= 1)
+            return;
         for (int i = numPoses - 1; i >= std::max(0, numPoses - numberOfKeyframeForTempolarMap); --i)
             surroundingKeyPoses->push_back(copy_cloudKeyPoses3D->points[i]);
 
@@ -139,10 +139,8 @@ void MapOptimization::globalMatching() {
     }
 
     pcl::IterativeClosestPoint<PointType, PointType> icp;
-    icp.setMaxCorrespondenceDistance(5.0);
-    icp.setMaximumIterations(200);
-    icp.setTransformationEpsilon(1e-4);
-    icp.setEuclideanFitnessEpsilon(1e-4);
+    icp.setMaxCorrespondenceDistance(0.6);
+    icp.setMaximumIterations(30);
     icp.setRANSACIterations(0);
 
     icp.setInputSource(subTemporalMap);
@@ -165,12 +163,16 @@ void MapOptimization::globalMatching() {
         //RCLCPP_INFO(rclcpp::get_logger("global matching"), "success global matching");
         matchedIndexContainer.insert(idx);
         float rot_var = 0.01f * (std::abs(roll) + std::abs(pitch) + std::abs(yaw));
-        float pos_var = icp.getFitnessScore();
+        float pos_var = icp.getFitnessScore() * 0.1;
 
         {
             std::lock_guard<std::mutex> lock(mtxGlobalMatching);
-            globalMatchingResult.emplace_back(idx, roll, pitch, yaw, x, y, z, rot_var, pos_var);
+            globalMatchingResult.emplace_back(idx, roll, pitch, yaw, x, y, z, pos_var, pos_var);
+            RCLCPP_INFO(rclcpp::get_logger("global matching"), "try global matching : %f", pos_var);
         }
+    }else{
+        RCLCPP_INFO(rclcpp::get_logger("global matching"), "try global matching : fail %f", icp.getFitnessScore());
+
     }
 
     // clear not_used
@@ -183,4 +185,5 @@ void MapOptimization::globalMatching() {
         }
 
     }
+
 }

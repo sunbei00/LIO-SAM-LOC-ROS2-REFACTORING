@@ -54,6 +54,7 @@
 #include <std_msgs/msg/float64_multi_array.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <nav_msgs/msg/path.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
 
 #include <deque>
 
@@ -87,6 +88,7 @@ public: // ros2
 
     rclcpp::Service<lio_sam_loc::srv::SaveMap>::SharedPtr srvSaveMap;
     rclcpp::Subscription<lio_sam_loc::msg::CloudInfo>::SharedPtr subCloud;
+    rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr subNavFix;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr subGPS;
     rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr subLoop;
 
@@ -199,8 +201,12 @@ public: // data
     std::mutex mtxGlobalMatching;
 
 
-    // TO DO: gps
+    // gps
     std::deque<nav_msgs::msg::Odometry> gpsQueue;
+    pcl::PointCloud<PointTypeXYI>::Ptr gpsKFPrebuilt;
+    PointTypeXYI currGPS = {-1, -1, -1};           // east north
+    double UTM2SLAMyaw = 0;
+
 
 public: // methods
 
@@ -212,6 +218,7 @@ public: // methods
     pcl::PointCloud<PointType>::Ptr transformPointCloud(pcl::PointCloud<PointType>::Ptr cloudIn, PointTypePose* transformIn);
     void laserCloudInfoHandler(const lio_sam_loc::msg::CloudInfo::SharedPtr msgIn);
     void gpsHandler(const nav_msgs::msg::Odometry::SharedPtr gpsMsg);
+    void navSatFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
     void updateInitialGuess();
     void extractNearby();
     void extractCloud(pcl::PointCloud<PointType>::Ptr cloudToExtract);
@@ -231,6 +238,7 @@ public: // methods
     void correctPoses();
     void updatePath(const PointTypePose& pose_in);
 
+
     // MOPublish.cpp
     void publishOdometry();
     void publishFrames();
@@ -249,6 +257,7 @@ public: // methods
     void initialposeHandler(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msgIn);
     bool systemInitialize();
     void keyframeLocalization();
+    void gpsLocalization();
 
 };
 

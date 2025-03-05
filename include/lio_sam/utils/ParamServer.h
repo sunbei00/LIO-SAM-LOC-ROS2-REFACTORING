@@ -21,6 +21,7 @@ public:
     string imuTopic;
     string odomTopic;
     string gpsTopic;
+    string navFixTopic;
 
     //Frames
     string lidarFrame;
@@ -117,6 +118,8 @@ public:
 
     ParamServer(std::string node_name, const rclcpp::NodeOptions & options) : Node(node_name, options)
     {
+        declare_parameter("navFixTopic", "fix");
+        get_parameter("navFixTopic", navFixTopic);
         declare_parameter("pointCloudTopic", "points");
         get_parameter("pointCloudTopic", pointCloudTopic);
         declare_parameter("imuTopic", "imu/data");

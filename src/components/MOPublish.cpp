@@ -91,24 +91,24 @@ void MapOptimization::publishFrames()
     // Publish surrounding key frames
     publishCloud(pubRecentKeyFrames, laserCloudSurfFromMapDS, timeLaserInfoStamp, odometryFrame);
 
-    // publish registered key frame
-    if (pubRecentKeyFrame->get_subscription_count() != 0)
-    {
-        pcl::PointCloud<PointType>::Ptr cloudOut(new pcl::PointCloud<PointType>());
-        PointTypePose thisPose6D = trans2PointTypePose(transformTobeMapped);
-        *cloudOut += *transformPointCloud(laserCloudCornerLastDS,  &thisPose6D);
-        *cloudOut += *transformPointCloud(laserCloudSurfLastDS,    &thisPose6D);
-        publishCloud(pubRecentKeyFrame, cloudOut, timeLaserInfoStamp, odometryFrame);
-    }
-    // publish registered high-res raw cloud
-    if (pubCloudRegisteredRaw->get_subscription_count() != 0)
-    {
-        pcl::PointCloud<PointType>::Ptr cloudOut(new pcl::PointCloud<PointType>());
-        pcl::fromROSMsg(cloudInfo.cloud_deskewed, *cloudOut);
-        PointTypePose thisPose6D = trans2PointTypePose(transformTobeMapped);
-        *cloudOut = *transformPointCloud(cloudOut,  &thisPose6D);
-        publishCloud(pubCloudRegisteredRaw, cloudOut, timeLaserInfoStamp, odometryFrame);
-    }
+    // // publish registered key frame
+    // if (pubRecentKeyFrame->get_subscription_count() != 0)
+    // {
+    //     pcl::PointCloud<PointType>::Ptr cloudOut(new pcl::PointCloud<PointType>());
+    //     PointTypePose thisPose6D = trans2PointTypePose(transformTobeMapped);
+    //     *cloudOut += *transformPointCloud(laserCloudCornerLastDS,  &thisPose6D);
+    //     *cloudOut += *transformPointCloud(laserCloudSurfLastDS,    &thisPose6D);
+    //     publishCloud(pubRecentKeyFrame, cloudOut, timeLaserInfoStamp, odometryFrame);
+    // }
+    // // publish registered high-res raw cloud
+    // if (pubCloudRegisteredRaw->get_subscription_count() != 0)
+    // {
+    //     pcl::PointCloud<PointType>::Ptr cloudOut(new pcl::PointCloud<PointType>());
+    //     pcl::fromROSMsg(cloudInfo.cloud_deskewed, *cloudOut);
+    //     PointTypePose thisPose6D = trans2PointTypePose(transformTobeMapped);
+    //     *cloudOut = *transformPointCloud(cloudOut,  &thisPose6D);
+    //     publishCloud(pubCloudRegisteredRaw, cloudOut, timeLaserInfoStamp, odometryFrame);
+    // }
     // publish path
     if (pubPath->get_subscription_count() != 0)
     {

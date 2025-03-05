@@ -42,8 +42,8 @@ rclcpp::QoS qos_imu = rclcpp::QoS(
 
 rmw_qos_profile_t qos_profile_lidar{
         RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-        5,
-        RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
+        100,
+        RMW_QOS_POLICY_RELIABILITY_RELIABLE,
         RMW_QOS_POLICY_DURABILITY_VOLATILE,
         RMW_QOS_DEADLINE_DEFAULT,
         RMW_QOS_LIFESPAN_DEFAULT,

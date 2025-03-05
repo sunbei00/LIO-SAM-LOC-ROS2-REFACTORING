@@ -1,7 +1,18 @@
 #include "MapOptimization.h"
 #include "utils/gtsamUtils.h"
+#include "utils/gpsUtils.h"
 #include <opencv2/opencv.hpp>
 
+
+void MapOptimization::navSatFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg){
+    double lat = msg->latitude;
+    double lon = msg->longitude;
+    auto [east, north] = latlon_to_utm(lat, lon);
+
+    currGPS.x = east;
+    currGPS.y = north;
+    currGPS.intensity = 0;
+}
 
 pcl::PointCloud<PointType>::Ptr MapOptimization::transformPointCloud(pcl::PointCloud<PointType>::Ptr cloudIn, PointTypePose* transformIn)
 {
@@ -696,7 +707,7 @@ void MapOptimization::addGlobalMatchingFactor() {
     mtxGlobalMatching.unlock();
 
     gtsam::noiseModel::Diagonal::shared_ptr pose_noise = noiseModel::Diagonal::Variances(
-            (Vector(6) << pos_var, pos_var, pos_var, rot_var, rot_var, rot_var).finished());
+            (Vector(6) << pos_var, pos_var, pos_var, pos_var, pos_var, pos_var).finished());
     gtsam::PriorFactor<gtsam::Pose3> pose_factor(
             idx,
             gtsam::Pose3(gtsam::Rot3::RzRyRx(roll, pitch, yaw), gtsam::Point3(x, y, z)),

@@ -73,5 +73,20 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (PointXYZIRPYT,
 
 typedef PointXYZIRPYT  PointTypePose;
 
+struct PointXYI
+{
+    double x;
+    double y;
+    float intensity;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+} EIGEN_ALIGN16;
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYI,
+                                  (double, x, x)
+                                  (double, y, y)
+                                  (float, intensity, intensity))
+
+typedef PointXYI PointTypeXYI;
+
 
 #endif //BUILD_PCLTYPE_H

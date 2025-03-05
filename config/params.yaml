@@ -3,20 +3,21 @@
 
     # Localization setting
     useKeyFrame: true
-    localizationMethod: "rviz"                  # rviz, keyframe, gps
-    collectKeyframeRange: 3.0                   # if use keyframe
-    localizationFitnessScore: 0.3               #
+    localizationMethod: "gps"                  # rviz, keyframe, gps
+    collectKeyframeRange: 3.0                  # if it use keyframe
+    localizationFitnessScore: 200.0            # after giving initial pose, ICP uses this fitness score
 
     # Global Matching
-    numberOfKeyframeForTempolarMap: 20          #
-    globalMatchingFrequency: 0.2                # Hz
-    globalMatchingFitnessScore: 0.5
+    numberOfKeyframeForTempolarMap: 6          #
+    globalMatchingFrequency: 0.5                # Hz
+    globalMatchingFitnessScore: 3.0
 
     # Topics
-    pointCloudTopic: "/velodyne_points"          # Point cloud data
-    imuTopic: "/imu"                             # IMU data
+    pointCloudTopic: "/point_cloud"          # Point cloud data
+    imuTopic: "/imu"                        # IMU data
     odomTopic: "odometry/imu"                    # IMU pre-preintegration odometry, same frequency as IMU
     gpsTopic: "odometry/gpsz"                    # GPS odometry topic from navsat, see module_navsat.launch file
+    navFixTopic: "/gps"
 
     # Frames
     lidarFrame: "lidar_link"
@@ -46,18 +47,19 @@
     Horizon_SCAN: 1800                          # lidar horizontal resolution (Velodyne:1800, Ouster:512,1024,2048, Livox Horizon: 4000)
     downsampleRate: 1                           # default: 1. Downsample your data if too many points. i.e., 16 = 64 / 4, 16 = 16 / 1
     lidarMinRange: 0.0                          # default: 1.0, minimum lidar range to be used
-    lidarMaxRange: 200.0                        # default: 1000.0, maximum lidar range to be used
+    lidarMaxRange: 1000.0                        # default: 1000.0, maximum lidar range to be used
 
+   
     # IMU Settings
-    imuAccNoise: 0.049058828
-    imuGyrNoise: 0.174677746
-    imuAccBiasN: 0.011656163
-    imuGyrBiasN: 0.010668651
+    imuAccNoise: 0.003151148885427242
+    imuGyrNoise: 0.001193787804118678 
+    imuAccBiasN: 6.906254379449776e-05 
+    imuGyrBiasN: 1.4766571227424171e-05
 
-    imuGravity: 0.0 #-9.81 #0.0
-    imuRPYWeight: 0.1
+    imuGravity: 9.81 #0.0
+    imuRPYWeight: 0.01
 
-    extrinsicTrans: [0.0, 0.0, 0.0]
+    extrinsicTrans: [0.13, 0.0, -0.13]
     extrinsicRot:    [1.0,  0.0,  0.0,
                       0.0,  1.0,  0.0,
                       0.0,  0.0, 1.0 ]
@@ -74,9 +76,9 @@
     surfFeatureMinValidNum: 100
 
     # voxel filter paprams
-    odometrySurfLeafSize: 0.4                     # default: 0.4 - outdoor, 0.2 - indoor
-    mappingCornerLeafSize: 0.2                    # default: 0.2 - outdoor, 0.1 - indoor
-    mappingSurfLeafSize: 0.4                      # default: 0.4 - outdoor, 0.2 - indoor
+    odometrySurfLeafSize: 0.2                    # default: 0.4 - outdoor, 0.2 - indoor
+    mappingCornerLeafSize: 0.1                    # default: 0.2 - outdoor, 0.1 - indoor
+    mappingSurfLeafSize: 0.2                      # default: 0.4 - outdoor, 0.2 - indoor
 
     # robot motion constraint (in case you are using a 2D robot)
     z_tollerance: 1000.0                          # meters
@@ -84,17 +86,17 @@
 
     # CPU Params
     numberOfCores: 4                              # number of cores for mapping optimization
-    mappingProcessInterval: 0.15                  # seconds, regulate mapping frequency
+    mappingProcessInterval: 0.01                  # seconds, regulate mapping frequency
 
     # Surrounding map
     surroundingkeyframeAddingDistThreshold: 1.0   # meters, regulate keyframe adding threshold
-    surroundingkeyframeAddingAngleThreshold: 0.2  # radians, regulate keyframe adding threshold
+    surroundingkeyframeAddingAngleThreshold: 0.4  # radians, regulate keyframe adding threshold
     surroundingKeyframeDensity: 2.0               # meters, downsample surrounding keyframe poses   
     surroundingKeyframeSearchRadius: 50.0         # meters, within n meters scan-to-map optimization
     # (when loop closure disabled)
 
     # Loop closure
-    loopClosureEnableFlag: true
+    loopClosureEnableFlag: false
     loopClosureFrequency: 1.0                     # Hz, regulate loop closure constraint add frequency
     surroundingKeyframeSize: 50                   # submap size (when loop closure enabled)
     historyKeyframeSearchRadius: 15.0             # meters, key frame that is within n meters from
