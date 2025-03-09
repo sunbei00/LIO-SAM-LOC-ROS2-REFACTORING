@@ -55,6 +55,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <nav_msgs/msg/path.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include "geometry_msgs/msg/quaternion_stamped.hpp"
 
 #include <deque>
 
@@ -91,6 +92,7 @@ public: // ros2
     rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr subNavFix;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr subGPS;
     rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr subLoop;
+    rclcpp::Subscription<geometry_msgs::msg::QuaternionStamped>::SharedPtr subHeading;
 
 public: // ros2 topic from /lio_sam/featureExtraction node
     lio_sam_loc::msg::CloudInfo cloudInfo;
@@ -200,12 +202,16 @@ public: // data
     std::set<int> matchedIndexContainer;
     std::mutex mtxGlobalMatching;
 
-
     // gps
     std::deque<nav_msgs::msg::Odometry> gpsQueue;
-    pcl::PointCloud<PointTypeXYI>::Ptr gpsKFPrebuilt;
+    // gps(navfix)
+    pcl::PointCloud<PointTypeXYI>::Ptr gpsKFPrebuilt; // gpsKeyPose (UTM Coordinate), idx : keyIndex -> data {east, north, intensity}
     PointTypeXYI currGPS = {-1, -1, -1};           // east north
     double UTM2SLAMyaw = 0;
+
+    // useGPSHeadingInitialization
+    bool isSubHeading = false;
+    double gpsHeadingYaw = 0.0;
 
 
 public: // methods
@@ -215,10 +221,12 @@ public: // methods
     void allocateMemory();
 
     // MapOptimization.cpp
-    pcl::PointCloud<PointType>::Ptr transformPointCloud(pcl::PointCloud<PointType>::Ptr cloudIn, PointTypePose* transformIn);
-    void laserCloudInfoHandler(const lio_sam_loc::msg::CloudInfo::SharedPtr msgIn);
+    void headingCallback(const geometry_msgs::msg::QuaternionStamped::SharedPtr msg);
     void gpsHandler(const nav_msgs::msg::Odometry::SharedPtr gpsMsg);
     void navSatFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
+
+    pcl::PointCloud<PointType>::Ptr transformPointCloud(pcl::PointCloud<PointType>::Ptr cloudIn, PointTypePose* transformIn);
+    void laserCloudInfoHandler(const lio_sam_loc::msg::CloudInfo::SharedPtr msgIn);
     void updateInitialGuess();
     void extractNearby();
     void extractCloud(pcl::PointCloud<PointType>::Ptr cloudToExtract);

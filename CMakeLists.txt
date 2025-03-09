@@ -41,6 +41,7 @@ find_package(PCL REQUIRED)
 find_package(GTSAM REQUIRED)
 find_package(Eigen REQUIRED)
 find_package(OpenMP REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 if (OpenMP_CXX_FOUND)
   set(USE_OPENMP OpenMP::OpenMP_CXX)
@@ -119,7 +120,8 @@ ament_target_dependencies(${PROJECT_NAME}_mapOptimization
         visualization_msgs
         tf2
         OpenCV
-        GTSAM)
+        GTSAM
+        geometry_msgs)
 target_link_libraries(${PROJECT_NAME}_mapOptimization
         gtsam
         "${cpp_typesupport_target}"

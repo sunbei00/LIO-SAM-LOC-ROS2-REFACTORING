@@ -28,6 +28,12 @@ MapOptimization::MapOptimization(const rclcpp::NodeOptions & options) : ParamSer
         res->success = saveMap(req->destination, req->resolution);
     };
 
+    subNavFix = this->create_subscription<sensor_msgs::msg::NavSatFix>(
+            navFixTopic, 10, std::bind(&MapOptimization::navSatFixCallback, this, std::placeholders::_1));
+    subHeading = this->create_subscription<geometry_msgs::msg::QuaternionStamped>(
+            gpsHeadingTopic, 10, std::bind(&MapOptimization::headingCallback, this, std::placeholders::_1));
+
+
     srvSaveMap = create_service<lio_sam_loc::srv::SaveMap>("lio_sam/save_map", saveMapService);
     pubHistoryKeyFrames = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/icp_loop_closure_history_cloud", 1);
     pubIcpKeyFrames = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/icp_loop_closure_history_cloud", 1);
@@ -48,9 +54,6 @@ MapOptimization::MapOptimization(const rclcpp::NodeOptions & options) : ParamSer
             std::bind(&MapOptimization::initialposeHandler, this, std::placeholders::_1));
     pubGlobalMap = create_publisher<sensor_msgs::msg::PointCloud2>("/lio_sam/mapping/cloud_registered", 1);
     // ------------------------------------------------------------
-
-    subNavFix = this->create_subscription<sensor_msgs::msg::NavSatFix>(
-            navFixTopic, 10, std::bind(&MapOptimization::navSatFixCallback, this, std::placeholders::_1));
 
     allocateMemory();
 
