@@ -168,10 +168,10 @@ void MapOptimization::globalMatching() {
         {
             std::lock_guard<std::mutex> lock(mtxGlobalMatching);
             globalMatchingResult.emplace_back(idx, roll, pitch, yaw, x, y, z, pos_var, pos_var);
-            RCLCPP_INFO(rclcpp::get_logger("global matching"), "try global matching : %f", pos_var);
+//            RCLCPP_INFO(rclcpp::get_logger("global matching"), "try global matching : %f", pos_var);
         }
     }else{
-        RCLCPP_INFO(rclcpp::get_logger("global matching"), "try global matching : fail %f", icp.getFitnessScore());
+//        RCLCPP_INFO(rclcpp::get_logger("global matching"), "try global matching : fail %f", icp.getFitnessScore());
 
     }
 
