@@ -30,8 +30,6 @@ MapOptimization::MapOptimization(const rclcpp::NodeOptions & options) : ParamSer
 
     subNavFix = this->create_subscription<sensor_msgs::msg::NavSatFix>(
             navFixTopic, 10, std::bind(&MapOptimization::navSatFixCallback, this, std::placeholders::_1));
-    subHeading = this->create_subscription<geometry_msgs::msg::QuaternionStamped>(
-            gpsHeadingTopic, 10, std::bind(&MapOptimization::headingCallback, this, std::placeholders::_1));
 
 
     srvSaveMap = create_service<lio_sam_loc::srv::SaveMap>("lio_sam/save_map", saveMapService);

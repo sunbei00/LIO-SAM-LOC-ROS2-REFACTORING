@@ -128,13 +128,7 @@ bool MapOptimization::systemInitialize()
     if(localizationMethod == "keyframe")
         keyframeLocalization();
 
-    if(localizationMethod == "gpsheading" && !isSubHeading){
-        RCLCPP_INFO(rclcpp::get_logger("localization"), "it doesn't receieve headingTopic");
-        return false;
-    }
-
-
-    if(localizationMethod == "gps" || localizationMethod == "gpsheading")
+    if(localizationMethod == "gps")
         gpsLocalization();
 
     if(!has_initialize_pose)
@@ -428,7 +422,7 @@ void MapOptimization::gpsLocalization() {
     assert(localizationMethod == "gps");
     assert(useKeyFrame);
 
-    if(!(localizationMethod == "gps"  || localizationMethod == "gpsheading"))
+    if(!(localizationMethod == "gps"))
         return;
 
     if(!useKeyFrame){
@@ -528,40 +522,39 @@ void MapOptimization::gpsLocalization() {
 
 //    RCLCPP_INFO(rclcpp::get_logger("localization"), "(gps based)initial pose : %f, %f, %f",currentPose.x, currentPose.y, currentPose.z);
 
-    if(localizationMethod == "gps"){
 
-        pcl::PointCloud<PointType>::Ptr cornerMap;
-        cornerMap.reset(new pcl::PointCloud<PointType>());
-        pcl::PointCloud<PointType>::Ptr surfMap;
-        surfMap.reset(new pcl::PointCloud<PointType>());
+    pcl::PointCloud<PointType>::Ptr cornerMap;
+    cornerMap.reset(new pcl::PointCloud<PointType>());
+    pcl::PointCloud<PointType>::Ptr surfMap;
+    surfMap.reset(new pcl::PointCloud<PointType>());
 
-        // extract sub-map
-        for (int i = 0; i < (int)pointSearchInd.size(); ++i)
+    // extract sub-map
+    for (int i = 0; i < (int)pointSearchInd.size(); ++i)
+    {
+        int idx = pointSearchInd.at(i);
+        int thisKeyInd = (int)gpsKFPrebuilt->points[idx].intensity;
+        if (mapContainerPrebuilt.find(thisKeyInd) != mapContainerPrebuilt.end())
         {
-            int idx = pointSearchInd.at(i);
-            int thisKeyInd = (int)gpsKFPrebuilt->points[idx].intensity;
-            if (mapContainerPrebuilt.find(thisKeyInd) != mapContainerPrebuilt.end())
-            {
-                *cornerMap += mapContainerPrebuilt[thisKeyInd].first;
-                *surfMap   += mapContainerPrebuilt[thisKeyInd].second;
-            } else {
-                pcl::PointCloud<PointType> laserCloudCornerTemp = *transformPointCloud(kf2cornerPrebuilt[thisKeyInd],  &kfPrebuilt6D->points[thisKeyInd]);
-                pcl::PointCloud<PointType> laserCloudSurfTemp = *transformPointCloud(kf2surfPrebuilt[thisKeyInd],  &kfPrebuilt6D->points[thisKeyInd]);
+            *cornerMap += mapContainerPrebuilt[thisKeyInd].first;
+            *surfMap   += mapContainerPrebuilt[thisKeyInd].second;
+        } else {
+            pcl::PointCloud<PointType> laserCloudCornerTemp = *transformPointCloud(kf2cornerPrebuilt[thisKeyInd],  &kfPrebuilt6D->points[thisKeyInd]);
+            pcl::PointCloud<PointType> laserCloudSurfTemp = *transformPointCloud(kf2surfPrebuilt[thisKeyInd],  &kfPrebuilt6D->points[thisKeyInd]);
 
-                *cornerMap += laserCloudCornerTemp;
-                *surfMap   += laserCloudSurfTemp;
+            *cornerMap += laserCloudCornerTemp;
+            *surfMap   += laserCloudSurfTemp;
 
-                mapContainerPrebuilt[thisKeyInd] = make_pair(laserCloudCornerTemp, laserCloudSurfTemp);
-            }
+            mapContainerPrebuilt[thisKeyInd] = make_pair(laserCloudCornerTemp, laserCloudSurfTemp);
         }
-        std::vector<std::pair<float, Eigen::Affine3f>> ndtResult;
+    }
+    std::vector<std::pair<float, Eigen::Affine3f>> ndtResult;
 
-        pcl::IterativeClosestPoint<PointType, PointType> icp;
-        icp.setMaxCorrespondenceDistance(1.0);
-        icp.setMaximumIterations(30);
+    pcl::IterativeClosestPoint<PointType, PointType> icp;
+    icp.setMaxCorrespondenceDistance(1.0);
+    icp.setMaximumIterations(30);
 //    icp.setTransformationEpsilon(1e-4);
 //    icp.setEuclideanFitnessEpsilon(1e-4);
-        icp.setRANSACIterations(0);
+    icp.setRANSACIterations(0);
 
 //    pcl::NormalDistributionsTransform<PointType, PointType> ndt;
 //    ndt.setResolution(0.1);
@@ -577,133 +570,113 @@ void MapOptimization::gpsLocalization() {
 // currentPose의 yaw 값은 이미 radian 단위입니다.
 // Coarse-and-Fine heading search (coarse: 22.5° ≒ 0.3927 rad 간격, fine: best coarse yaw 주변 세밀 검색)
 
-        // 맵 point cloud 생성 (corner + surface)
-        pcl::PointCloud<PointType>::Ptr combinedCloudMap(new pcl::PointCloud<PointType>());
-        *combinedCloudMap = *cornerMap + *surfMap;
-        icp.setInputTarget(combinedCloudMap);
+    // 맵 point cloud 생성 (corner + surface)
+    pcl::PointCloud<PointType>::Ptr combinedCloudMap(new pcl::PointCloud<PointType>());
+    *combinedCloudMap = *cornerMap + *surfMap;
+    icp.setInputTarget(combinedCloudMap);
 // Coarse Search: 전체 360° 범위를 22.5°(0.3927 rad) 간격으로 탐색
-        std::vector<std::pair<float, Eigen::Affine3f>> coarseResults;
-        float coarseStep = 22.5 * M_PI / 180.0;  // 22.5° in radian (≈0.3927)
-        int coarseSteps = 16;  // 360° / 22.5° = 16 steps
-        float initialYaw = currentPose.yaw;  // 이미 radian 단위
+    std::vector<std::pair<float, Eigen::Affine3f>> coarseResults;
+    float coarseStep = 22.5 * M_PI / 180.0;  // 22.5° in radian (≈0.3927)
+    int coarseSteps = 16;  // 360° / 22.5° = 16 steps
+    float initialYaw = currentPose.yaw;  // 이미 radian 단위
 
-        for (int i = 0; i < coarseSteps; i++) {
-            float testYaw = initialYaw + i * coarseStep;
-            // testYaw를 [-pi, pi] 범위로 정규화
-            if (testYaw > M_PI)
-                testYaw -= 2 * M_PI;
-            else if (testYaw < -M_PI)
-                testYaw += 2 * M_PI;
-            currentPose.yaw = testYaw;
-            Eigen::Affine3f initialize_affine = pclPointToAffine3f(currentPose);
+    for (int i = 0; i < coarseSteps; i++) {
+        float testYaw = initialYaw + i * coarseStep;
+        // testYaw를 [-pi, pi] 범위로 정규화
+        if (testYaw > M_PI)
+            testYaw -= 2 * M_PI;
+        else if (testYaw < -M_PI)
+            testYaw += 2 * M_PI;
+        currentPose.yaw = testYaw;
+        Eigen::Affine3f initialize_affine = pclPointToAffine3f(currentPose);
 
-            // 변환된 마지막 프레임 point cloud 생성
-            pcl::PointCloud<PointType>::Ptr combinedCloudLast(new pcl::PointCloud<PointType>());
-            *combinedCloudLast = *laserCloudCornerLastDS + *laserCloudSurfLastDS;
-            pcl::PointCloud<PointType>::Ptr transformedCombinedCloudLast(new pcl::PointCloud<PointType>());
-            pcl::transformPointCloud(*combinedCloudLast, *transformedCombinedCloudLast, initialize_affine);
-            icp.setInputSource(transformedCombinedCloudLast);
+        // 변환된 마지막 프레임 point cloud 생성
+        pcl::PointCloud<PointType>::Ptr combinedCloudLast(new pcl::PointCloud<PointType>());
+        *combinedCloudLast = *laserCloudCornerLastDS + *laserCloudSurfLastDS;
+        pcl::PointCloud<PointType>::Ptr transformedCombinedCloudLast(new pcl::PointCloud<PointType>());
+        pcl::transformPointCloud(*combinedCloudLast, *transformedCombinedCloudLast, initialize_affine);
+        icp.setInputSource(transformedCombinedCloudLast);
 
 
 
-            pcl::PointCloud<PointType>::Ptr result(new pcl::PointCloud<PointType>());
-            icp.align(*result);
-            Eigen::Matrix4f finalTrans = icp.getFinalTransformation();
-            Eigen::Affine3f correctionLidarFrame(finalTrans);
-            Eigen::Affine3f tCorrect = correctionLidarFrame * initialize_affine;
+        pcl::PointCloud<PointType>::Ptr result(new pcl::PointCloud<PointType>());
+        icp.align(*result);
+        Eigen::Matrix4f finalTrans = icp.getFinalTransformation();
+        Eigen::Affine3f correctionLidarFrame(finalTrans);
+        Eigen::Affine3f tCorrect = correctionLidarFrame * initialize_affine;
 
-            coarseResults.emplace_back(icp.getFitnessScore(), tCorrect);
-        }
+        coarseResults.emplace_back(icp.getFitnessScore(), tCorrect);
+    }
 
 // Coarse 결과 중 가장 낮은 fitness score를 보인 yaw 선택
-        auto bestCoarseIt = std::min_element(coarseResults.begin(), coarseResults.end(),
-                                             [](const std::pair<float, Eigen::Affine3f>& a,
-                                                const std::pair<float, Eigen::Affine3f>& b) {
-                                                 return a.first < b.first;
-                                             });
-        Eigen::Affine3f bestCoarseTransform = bestCoarseIt->second;
-        float bestCoarseYaw;
-        {
-            float bestCoarseScore = bestCoarseIt->first;
-            float x,y,z;
-            float roll, pitch;
-            pcl::getTranslationAndEulerAngles(bestCoarseTransform, x, y, z, roll, pitch, bestCoarseYaw);
+    auto bestCoarseIt = std::min_element(coarseResults.begin(), coarseResults.end(),
+                                         [](const std::pair<float, Eigen::Affine3f>& a,
+                                            const std::pair<float, Eigen::Affine3f>& b) {
+                                             return a.first < b.first;
+                                         });
+    Eigen::Affine3f bestCoarseTransform = bestCoarseIt->second;
+    float bestCoarseYaw;
+    {
+        float bestCoarseScore = bestCoarseIt->first;
+        float x,y,z;
+        float roll, pitch;
+        pcl::getTranslationAndEulerAngles(bestCoarseTransform, x, y, z, roll, pitch, bestCoarseYaw);
 //            RCLCPP_INFO(rclcpp::get_logger("localization"), "coarse initial pose : %f, %f, %f, %f, %f, %f, %f", x, y, z, roll, pitch, bestCoarseYaw, bestCoarseScore);
-        }
+    }
 
-        icp.setMaxCorrespondenceDistance(0.3);
+    icp.setMaxCorrespondenceDistance(0.3);
 // Fine Search: bestCoarseYaw 주변에서 ±(coarseStep/2) 범위를 더 세밀하게 탐색
-        std::vector<std::pair<float, Eigen::Affine3f>> fineResults;
-        float fineRange = coarseStep / 2;  // ±0.19635 rad 범위
-        float fineStep = fineRange / 4;      // 약 0.04909 rad씩 세분화 (총 9단계, 중심 포함)
-        int fineSteps = 9;
+    std::vector<std::pair<float, Eigen::Affine3f>> fineResults;
+    float fineRange = coarseStep / 2;  // ±0.19635 rad 범위
+    float fineStep = fineRange / 4;      // 약 0.04909 rad씩 세분화 (총 9단계, 중심 포함)
+    int fineSteps = 9;
 
-        for (int i = 0; i < fineSteps; i++) {
-            float offset = -2 * fineStep + i * fineStep;
-            float testYaw = bestCoarseYaw + offset;
-            // testYaw 정규화
-            if (testYaw > M_PI)
-                testYaw -= 2 * M_PI;
-            else if (testYaw < -M_PI)
-                testYaw += 2 * M_PI;
-            currentPose.yaw = testYaw;
-            Eigen::Affine3f initialize_affine = pclPointToAffine3f(currentPose);
+    for (int i = 0; i < fineSteps; i++) {
+        float offset = -2 * fineStep + i * fineStep;
+        float testYaw = bestCoarseYaw + offset;
+        // testYaw 정규화
+        if (testYaw > M_PI)
+            testYaw -= 2 * M_PI;
+        else if (testYaw < -M_PI)
+            testYaw += 2 * M_PI;
+        currentPose.yaw = testYaw;
+        Eigen::Affine3f initialize_affine = pclPointToAffine3f(currentPose);
 
-            pcl::PointCloud<PointType>::Ptr combinedCloudLast(new pcl::PointCloud<PointType>());
-            *combinedCloudLast = *laserCloudCornerLastDS + *laserCloudSurfLastDS;
-            pcl::PointCloud<PointType>::Ptr transformedCombinedCloudLast(new pcl::PointCloud<PointType>());
-            pcl::transformPointCloud(*combinedCloudLast, *transformedCombinedCloudLast, initialize_affine);
-            icp.setInputSource(transformedCombinedCloudLast);
+        pcl::PointCloud<PointType>::Ptr combinedCloudLast(new pcl::PointCloud<PointType>());
+        *combinedCloudLast = *laserCloudCornerLastDS + *laserCloudSurfLastDS;
+        pcl::PointCloud<PointType>::Ptr transformedCombinedCloudLast(new pcl::PointCloud<PointType>());
+        pcl::transformPointCloud(*combinedCloudLast, *transformedCombinedCloudLast, initialize_affine);
+        icp.setInputSource(transformedCombinedCloudLast);
 
-            pcl::PointCloud<PointType>::Ptr result(new pcl::PointCloud<PointType>());
-            icp.align(*result);
-            Eigen::Matrix4f finalTrans = icp.getFinalTransformation();
-            Eigen::Affine3f correctionLidarFrame(finalTrans);
-            Eigen::Affine3f tCorrect = correctionLidarFrame * initialize_affine;
+        pcl::PointCloud<PointType>::Ptr result(new pcl::PointCloud<PointType>());
+        icp.align(*result);
+        Eigen::Matrix4f finalTrans = icp.getFinalTransformation();
+        Eigen::Affine3f correctionLidarFrame(finalTrans);
+        Eigen::Affine3f tCorrect = correctionLidarFrame * initialize_affine;
 
-            fineResults.emplace_back(icp.getFitnessScore(), tCorrect);
-        }
+        fineResults.emplace_back(icp.getFitnessScore(), tCorrect);
+    }
 
 // Fine 결과 중 가장 낮은 fitness score를 보인 결과 선택
-        auto bestFineIt = std::min_element(fineResults.begin(), fineResults.end(),
-                                           [](const std::pair<float, Eigen::Affine3f>& a,
-                                              const std::pair<float, Eigen::Affine3f>& b) {
-                                               return a.first < b.first;
-                                           });
-        float bestFineScore = bestFineIt->first;
-        Eigen::Affine3f bestFineTransform = bestFineIt->second;
+    auto bestFineIt = std::min_element(fineResults.begin(), fineResults.end(),
+                                       [](const std::pair<float, Eigen::Affine3f>& a,
+                                          const std::pair<float, Eigen::Affine3f>& b) {
+                                           return a.first < b.first;
+                                       });
+    float bestFineScore = bestFineIt->first;
+    Eigen::Affine3f bestFineTransform = bestFineIt->second;
 
-        float x, y, z, roll, pitch, yaw;
-        pcl::getTranslationAndEulerAngles(bestFineTransform, x, y, z, roll, pitch, yaw);
-        initialize_pose[0] = roll;
-        initialize_pose[1] = pitch;
-        initialize_pose[2] = yaw;
-        initialize_pose[3] = x;
-        initialize_pose[4] = y;
-        initialize_pose[5] = z;
-        RCLCPP_INFO(rclcpp::get_logger("localization"), "final initial pose : %f, %f, %f, %f, %f, %f, %f",
-                    x, y, z, roll, pitch, yaw, bestFineScore);
+    float x, y, z, roll, pitch, yaw;
+    pcl::getTranslationAndEulerAngles(bestFineTransform, x, y, z, roll, pitch, yaw);
+    initialize_pose[0] = roll;
+    initialize_pose[1] = pitch;
+    initialize_pose[2] = yaw;
+    initialize_pose[3] = x;
+    initialize_pose[4] = y;
+    initialize_pose[5] = z;
+    RCLCPP_INFO(rclcpp::get_logger("localization"), "final initial pose : %f, %f, %f, %f, %f, %f, %f",
+                x, y, z, roll, pitch, yaw, bestFineScore);
 
-        has_initialize_pose = true;
-    }else if(localizationMethod == "gpsheading"){
-        if(useImuHeadingInitialization){
-            initialize_pose[0] = cloudInfo.imu_roll_init;
-            initialize_pose[1] = cloudInfo.imu_pitch_init;
-            initialize_pose[2] = cloudInfo.imu_yaw_init;
-        }else{
-            initialize_pose[0] = 0.0;
-            initialize_pose[1] = 0.0;
-            initialize_pose[2] = 0.0;
-        }
+    has_initialize_pose = true;
 
-        if(useGPSHeadingInitialization)
-            if(isSubHeading)
-                initialize_pose[2] = gpsHeadingYaw;
-
-        initialize_pose[3] = currentPose.x;
-        initialize_pose[4] = currentPose.y;
-        initialize_pose[5] = currentPose.z;
-
-        has_initialize_pose = true;
-    }
 }

@@ -3,7 +3,7 @@
 
     # Localization setting
     useKeyFrame: true
-    localizationMethod: "gpsheading"                  # rviz, keyframe, gps, gpsheading
+    localizationMethod: "gps"                  # rviz, keyframe, gps
     collectKeyframeRange: 3.0                  # if it use keyframe
     localizationFitnessScore: 200.0            # after giving initial pose, ICP uses this fitness score
 
@@ -18,8 +18,6 @@
     odomTopic: "odometry/imu"                    # IMU pre-preintegration odometry, same frequency as IMU
     gpsTopic: "odometry/gpsz"                    # GPS odometry topic from navsat, see module_navsat.launch file
     navFixTopic: "/gps"
-    gpsHeadingTopic: "/heading"                    # it is used to initialize pose(yaw),
-    # if useGPSHeadingInitialization is true
 
     # Frames
     lidarFrame: "lidar_link"
@@ -28,9 +26,8 @@
     mapFrame: "map"
 
     # GPS Settings
-    useImuHeadingInitialization: true            # if using 9Axis-IMU, set to "true"
-                                                 # if using 6Axis-IMU, set to "false"
-    useGPSHeadingInitialization: false            # using headingTopic
+#    useImuHeadingInitialization: false           # if using 9Axis-IMU, set to "true"
+#                                                 # if using 6Axis-IMU, set to "false"
     useGpsElevation: false                       # if GPS elevation is bad, set to "false"
     gpsCovThreshold: 2.0                         # m^2, threshold for using GPS data
     poseCovThreshold: 25.0                       # m^2, threshold for using GPS data

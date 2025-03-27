@@ -209,11 +209,6 @@ public: // data
     PointTypeXYI currGPS = {-1, -1, -1};           // east north
     double UTM2SLAMyaw = 0;
 
-    // useGPSHeadingInitialization
-    bool isSubHeading = false;
-    double gpsHeadingYaw = 0.0;
-
-
 public: // methods
 
     // MOInitializer.cpp
@@ -221,7 +216,6 @@ public: // methods
     void allocateMemory();
 
     // MapOptimization.cpp
-    void headingCallback(const geometry_msgs::msg::QuaternionStamped::SharedPtr msg);
     void gpsHandler(const nav_msgs::msg::Odometry::SharedPtr gpsMsg);
     void navSatFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
 
