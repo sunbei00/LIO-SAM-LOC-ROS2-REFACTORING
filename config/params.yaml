@@ -18,8 +18,6 @@
     odomTopic: "odometry/imu"                    # IMU pre-preintegration odometry, same frequency as IMU
     gpsTopic: "odometry/gpsz"                    # GPS odometry topic from navsat, see module_navsat.launch file
     navFixTopic: "/fix"
-    gpsHeadingTopic: "/heading"                    # it is used to initialize pose(yaw),
-    # if useGPSHeadingInitialization is true
 
     # Frames
     lidarFrame: "lidar_link"
@@ -28,7 +26,6 @@
     mapFrame: "map"
 
     # if using 6Axis-IMU, set to "false"
-    useGPSHeadingInitialization: false            # using headingTopic
     useGpsElevation: false                       # if GPS elevation is bad, set to "false"
     gpsCovThreshold: 2.0                         # m^2, threshold for using GPS data
     poseCovThreshold: 25.0                       # m^2, threshold for using GPS data
@@ -49,13 +46,6 @@
     downsampleRate: 1                           # default: 1. Downsample your data if too many points. i.e., 16 = 64 / 4, 16 = 16 / 1
     lidarMinRange: 0.0                          # default: 1.0, minimum lidar range to be used
     lidarMaxRange: 1000.0                        # default: 1000.0, maximum lidar range to be used
-
-
-    # IMU Settings
-    # imuAccNoise: 0.002
-    # imuGyrNoise: 1.5636343949698187e-03
-    # imuAccBiasN: 0.03
-    # imuGyrBiasN: 3.5640318696367613e-05
 
     imuAccNoise: 0.0014807241097940828 #0.002
     imuGyrNoise: 0.00018374638092929994 #1.5636343949698187e-03
@@ -95,10 +85,6 @@
     odometrySurfLeafSize: 0.4                    # default: 0.4 - outdoor, 0.2 - indoor
     mappingCornerLeafSize: 0.2                    # default: 0.2 - outdoor, 0.1 - indoor
     mappingSurfLeafSize: 0.4                      # default: 0.4 - outdoor, 0.2 - indoor
-
-    # robot motion constraint (in case you are using a 2D robot)
-    z_tollerance: 1000.0                          # meters
-    rotation_tollerance: 1000.0                   # radians
 
     # CPU Params
     numberOfCores: 2                              # number of cores for mapping optimization
