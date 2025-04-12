@@ -27,8 +27,6 @@
     odometryFrame: "odom"
     mapFrame: "map"
 
-    # GPS Settings
-    useImuHeadingInitialization: false            # if using 9Axis-IMU, set to "true"
     # if using 6Axis-IMU, set to "false"
     useGPSHeadingInitialization: false            # using headingTopic
     useGpsElevation: false                       # if GPS elevation is bad, set to "false"
@@ -48,7 +46,7 @@
     sensor: ouster                            # lidar sensor type, 'velodyne' or 'ouster' or 'livox'
     N_SCAN: 128                                  # number of lidar channel (i.e., Velodyne/Ouster: 16, 32, 64, 128, Livox Horizon: 6)
     Horizon_SCAN: 1024                       # lidar horizontal resolution (Velodyne:1800, Ouster:512,1024,2048, Livox Horizon: 4000)
-    downsampleRate: 4                           # default: 1. Downsample your data if too many points. i.e., 16 = 64 / 4, 16 = 16 / 1
+    downsampleRate: 1                           # default: 1. Downsample your data if too many points. i.e., 16 = 64 / 4, 16 = 16 / 1
     lidarMinRange: 0.0                          # default: 1.0, minimum lidar range to be used
     lidarMaxRange: 1000.0                        # default: 1000.0, maximum lidar range to be used
 
@@ -59,16 +57,22 @@
     # imuAccBiasN: 0.03
     # imuGyrBiasN: 3.5640318696367613e-05
 
-    imuAccNoise: 3.9939570888238808e-03
-    imuGyrNoise: 1.5636343949698187e-03
-    imuAccBiasN: 6.4356659353532566e-05
-    imuGyrBiasN: 3.5640318696367613e-05
+    imuAccNoise: 0.0014807241097940828 #0.002
+    imuGyrNoise: 0.00018374638092929994 #1.5636343949698187e-03
+    imuAccBiasN: 0.0001086369975568063 # 0.03
+    imuGyrBiasN: 6.824629184710982e-06 #3.5640318696367613e-05
 
     imuRate: 100.0
+    imuGravityAccelAdjustment: true # Gravity-based acceleration compensation # it needs 8-Axis or 9-Axis IMU
     imuPriorAcc: [0.0, 0.0, 0.0]
     imuPriorGyr: [0.0, 0.0, 0.0]
+    imuType : 8
+    # 6-axis(linear acceleration, angular velocity) IMU : 6
+    # 8-axis(+ roll pitch) IMU : 8
+    # 9-axis(+ roll pitch yaw) IMU : 9
 
     imuGravity: -9.81
+    useImuRPYWeight : false # need 8-Axis or 9-Axis IMU
     imuRPYWeight: 0.01
 
     extrinsicTrans:  [-0.3212, 0.0, -0.7895]
