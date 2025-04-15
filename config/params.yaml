@@ -9,7 +9,7 @@
 
     # Global Matching
     numberOfKeyframeForTempolarMap: 6           #
-    globalMatchingFrequency: 2.0                # Hz
+    globalMatchingFrequency: 1.0                # Hz
     globalMatchingFitnessScore: 3.0
 
     # Topics
@@ -25,7 +25,6 @@
     odometryFrame: "odom"
     mapFrame: "map"
 
-    # if using 6Axis-IMU, set to "false"
     useGpsElevation: false                       # if GPS elevation is bad, set to "false"
     gpsCovThreshold: 2.0                         # m^2, threshold for using GPS data
     poseCovThreshold: 25.0                       # m^2, threshold for using GPS data
