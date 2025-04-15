@@ -29,15 +29,15 @@ def generate_launch_description():
             parameters=[parameter_file],
             output='screen'
         ),
-        Node(
-            package='robot_state_publisher',
-            executable='robot_state_publisher',
-            name='robot_state_publisher_tf_static',
-            output='screen',
-            parameters=[{
-                'robot_description': Command(['xacro', ' ', xacro_path])
-            }]
-        ),
+#        Node(
+#            package='robot_state_publisher',
+#            executable='robot_state_publisher',
+#            name='robot_state_publisher_tf_static',
+#            output='screen',
+#            parameters=[{
+#                'robot_description': Command(['xacro', ' ', xacro_path])
+#            }]
+#        ),
         Node(
             package='lio_sam_loc',
             executable='lio_sam_loc_imuPreintegration',
