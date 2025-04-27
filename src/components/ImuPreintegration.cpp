@@ -208,10 +208,19 @@ void IMUPreintegration::odometryHandler(const nav_msgs::msg::Odometry::SharedPtr
         resetParams();
         return;
     }
+
     graphFactors.resize(0);
     graphValues.clear();
     // Overwrite the beginning of the preintegration for the next step.
-    gtsam::Values result = optimizer.calculateEstimate();
+    gtsam::Values result;
+    try {
+        result = optimizer.calculateEstimate();
+    } catch (const gtsam::IndeterminantLinearSystemException& e) {
+        RCLCPP_WARN(rclcpp::get_logger("IMUPreintegration"), "GTSAM optimization failed: %s", e.what());
+        resetParams();
+        return;
+    }
+
     prevPose_  = result.at<gtsam::Pose3>(X(key));
     prevVel_   = result.at<gtsam::Vector3>(V(key));
     prevState_ = gtsam::NavState(prevPose_, prevVel_);
