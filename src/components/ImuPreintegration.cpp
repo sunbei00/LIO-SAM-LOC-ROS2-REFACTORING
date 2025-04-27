@@ -200,8 +200,14 @@ void IMUPreintegration::odometryHandler(const nav_msgs::msg::Odometry::SharedPtr
     graphValues.insert(V(key), propState_.v());
     graphValues.insert(B(key), prevBias_);
     // optimize
-    optimizer.update(graphFactors, graphValues);
-    optimizer.update();
+    try {
+        optimizer.update(graphFactors, graphValues);
+        optimizer.update();
+    } catch (const gtsam::IndeterminantLinearSystemException& e) {
+        RCLCPP_WARN(rclcpp::get_logger("IMUPreintegration"), "GTSAM optimization failed: %s", e.what());
+        resetParams();
+        return;
+    }
     graphFactors.resize(0);
     graphValues.clear();
     // Overwrite the beginning of the preintegration for the next step.
