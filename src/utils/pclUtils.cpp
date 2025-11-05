@@ -2,7 +2,8 @@
 
 sensor_msgs::msg::PointCloud2 publishCloud(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr thisPub, pcl::PointCloud<PointType>::Ptr thisCloud, rclcpp::Time thisStamp, std::string thisFrame)
 {
-    sensor_msgs::msg::PointCloud2 tempCloud;
+    // sensor_msgs::msg::PointCloud2 tempCloud;
+    auto tempCloud = thisPub->borrow_loaned_message().get();
     pcl::toROSMsg(*thisCloud, tempCloud);
     tempCloud.header.stamp = thisStamp;
     tempCloud.header.frame_id = thisFrame;

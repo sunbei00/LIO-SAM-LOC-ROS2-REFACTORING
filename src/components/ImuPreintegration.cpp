@@ -36,6 +36,7 @@ IMUPreintegration::IMUPreintegration(const rclcpp::NodeOptions & options) : Para
     priorVelNoise   = gtsam::noiseModel::Isotropic::Sigma(3, 1e4); // m/s
     priorBiasNoise  = gtsam::noiseModel::Isotropic::Sigma(6, 1e-3); // 1e-2 ~ 1e-3 seems to be good
     correctionNoise = gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(6) << 0.05 / 10 , 0.05 / 10, 0.05 / 10, 0.1 / 10, 0.1 / 10, 0.1 / 10).finished()); // rad,rad,rad,m, m, m
+     //correctionNoise = gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(6) << 0.05 , 0.05, 0.05, 0.1, 0.1, 0.1).finished()); // rad,rad,rad,m, m, m
     // correctionNoise2 = gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(6) << 1, 1, 1, 1, 1, 1).finished()); // rad,rad,rad,m, m, m
     correctionNoise2 = gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(6) << 0.1, 0.1, 0.1, 0.2, 0.2, 0.2).finished()); // rad,rad,rad,m, m, m
     noiseModelBetweenBias = (gtsam::Vector(6) << imuAccBiasN, imuAccBiasN, imuAccBiasN, imuGyrBiasN, imuGyrBiasN, imuGyrBiasN).finished();
@@ -173,7 +174,7 @@ void IMUPreintegration::odometryHandler(const nav_msgs::msg::Odometry::SharedPtr
         if (imuTime < currentCorrectionTime - delta_t)
         {
             double dt = (lastImuT_opt < 0) ? (1.0 / 500.0) : (imuTime - lastImuT_opt);
-            dt = dt  < 1e-4 ? 1 / 500 : dt;
+            dt = dt  < 1e-4 ? 1 / 500.0 : dt;
             imuIntegratorOpt_->integrateMeasurement(
                     gtsam::Vector3(thisImu->linear_acceleration.x, thisImu->linear_acceleration.y, thisImu->linear_acceleration.z),
                     gtsam::Vector3(thisImu->angular_velocity.x,    thisImu->angular_velocity.y,    thisImu->angular_velocity.z), dt);
@@ -257,7 +258,7 @@ void IMUPreintegration::odometryHandler(const nav_msgs::msg::Odometry::SharedPtr
             sensor_msgs::msg::Imu *thisImu = &imuQueImu[i];
             double imuTime = stamp2Sec(thisImu->header.stamp);
             double dt = (lastImuQT < 0) ? (1.0 / 500.0) :(imuTime - lastImuQT);
-            dt = dt  < 1e-4 ? 1 / 500 : dt;
+            dt = dt  < 1e-4 ? 1 / 500.0 : dt;
 
             imuIntegratorImu_->integrateMeasurement(gtsam::Vector3(thisImu->linear_acceleration.x, thisImu->linear_acceleration.y, thisImu->linear_acceleration.z),
                                                     gtsam::Vector3(thisImu->angular_velocity.x,    thisImu->angular_velocity.y,    thisImu->angular_velocity.z), dt);
@@ -303,7 +304,7 @@ void IMUPreintegration::imuHandler(const sensor_msgs::msg::Imu::SharedPtr imu_ra
 
     double imuTime = stamp2Sec(thisImu.header.stamp);
     double dt = (lastImuT_imu < 0) ? (1.0 / 500.0) : (imuTime - lastImuT_imu);
-    dt = dt  < 1e-4 ? 1 / 500 : dt;
+    dt = dt  < 1e-4 ? 1 / 500.0 : dt;
     lastImuT_imu = imuTime;
 
     // integrate this single imu message
@@ -314,7 +315,7 @@ void IMUPreintegration::imuHandler(const sensor_msgs::msg::Imu::SharedPtr imu_ra
     gtsam::NavState currentState = imuIntegratorImu_->predict(prevStateOdom, prevBiasOdom);
 
     // publish odometry (odometry/imu_incremental)
-    auto odometry = nav_msgs::msg::Odometry();
+    auto odometry = pubImuOdometry->borrow_loaned_message().get();
     odometry.header.stamp = thisImu.header.stamp;
     odometry.header.frame_id = odometryFrame;
     odometry.child_frame_id = "odom_imu";

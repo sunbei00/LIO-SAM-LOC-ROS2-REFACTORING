@@ -108,7 +108,8 @@ void TransformFusion::imuOdometryHandler(const nav_msgs::msg::Odometry::SharedPt
 
 
     // publish IMU path
-    static nav_msgs::msg::Path imuPath;
+    // static nav_msgs::msg::Path imuPath;
+    auto imuPath = pubImuPath->borrow_loaned_message().get();
     static double last_path_time = -1;
     double imuTime = stamp2Sec(imuOdomQueue.back().header.stamp);
     if (imuTime - last_path_time > 0.1)

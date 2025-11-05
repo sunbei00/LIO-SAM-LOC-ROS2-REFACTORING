@@ -3,7 +3,7 @@
 void MapOptimization::publishOdometry()
 {
     // Publish odometry for ROS (global)
-    nav_msgs::msg::Odometry laserOdometryROS;
+    auto laserOdometryROS = pubLaserOdometryGlobal->borrow_loaned_message().get();
     laserOdometryROS.header.stamp = timeLaserInfoStamp;
     laserOdometryROS.header.frame_id = odometryFrame;
     laserOdometryROS.child_frame_id = "odom_mapping";
@@ -29,7 +29,8 @@ void MapOptimization::publishOdometry()
 
     // Publish odometry for ROS (incremental)
     static bool lastIncreOdomPubFlag = false;
-    static nav_msgs::msg::Odometry laserOdomIncremental; // incremental odometry msg
+    // static nav_msgs::msg::Odometry laserOdomIncremental; // incremental odometry msg
+    auto laserOdomIncremental = pubLaserOdometryIncremental->borrow_loaned_message().get();
     static Eigen::Affine3f increOdomAffine; // incremental odometry in affine
     if (lastIncreOdomPubFlag == false)
     {
